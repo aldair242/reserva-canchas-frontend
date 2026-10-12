@@ -6,6 +6,10 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { RegistroPage } from '@/features/auth/RegistroPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { SedesPage } from '@/features/sedes/SedesPage';
+import { CanchasPage } from '@/features/canchas/CanchasPage';
+import { CanchaDetallePage } from '@/features/canchas/CanchaDetallePage';
+import { MisReservasPage } from '@/features/reservas/MisReservasPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
@@ -16,6 +20,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegistroPage />} />
+        <Route path="/sedes" element={<SedesPage />} />
+        <Route path="/canchas" element={<CanchasPage />} />
+        <Route path="/canchas/:id" element={<CanchaDetallePage />} />
         <Route path="/403" element={<ForbiddenPage />} />
 
         {/* Rutas protegidas para JUGADOR */}
@@ -23,9 +30,7 @@ export const AppRoutes: React.FC = () => {
           path="/mis-reservas"
           element={
             <ProtectedRoute rolesPermitidos={['JUGADOR']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Mis Reservas (Jugador)</h1>
-              </div>
+              <MisReservasPage />
             </ProtectedRoute>
           }
         />

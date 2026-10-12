@@ -4,7 +4,7 @@ import type { AuthContextType, UsuarioAutenticado, RolUsuario } from '@/types/au
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => {

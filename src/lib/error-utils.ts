@@ -3,7 +3,9 @@ import { isAxiosError } from 'axios';
 export interface BackendApiError {
   codigo?: string;
   mensaje?: string;
+  message?: string;
   detalles?: string[];
+  fieldErrors?: Record<string, string>;
   timestamp?: string;
 }
 
@@ -11,14 +13,15 @@ export const getApiErrorMessage = (error: unknown, fallbackMessage = 'Ha ocurrid
   if (isAxiosError(error)) {
     const status = error.response?.status;
     const data = error.response?.data as BackendApiError | undefined;
+    const backendMsg = data?.message || data?.mensaje;
 
-    if (data?.mensaje) {
+    if (backendMsg) {
       if (status === 409) {
-        return data.mensaje.includes('ya no está disponible')
-          ? data.mensaje
-          : `${data.mensaje} (El horario o recurso ya no se encuentra disponible).`;
+        return backendMsg.includes('ya no está disponible') || backendMsg.includes('ya está reservada')
+          ? backendMsg
+          : `${backendMsg} (El horario o recurso ya no se encuentra disponible).`;
       }
-      return data.mensaje;
+      return backendMsg;
     }
 
     if (status === 400) {

@@ -89,25 +89,35 @@ export const HomePage: React.FC = () => {
 
       {/* Feature cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4">
+        <Link
+          to="/sedes"
+          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition block group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <MapPin className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-bold text-slate-800">Sedes y Canchas</h2>
+          <h2 className="text-lg font-bold text-slate-800 group-hover:text-emerald-600 transition-colors">
+            Sedes y Canchas
+          </h2>
           <p className="mt-2 text-sm text-slate-600">
             Fútbol 5, 7 y 11, básquetbol, vóley y pádel con filtros por disciplina, superficie y servicios.
           </p>
-        </div>
+        </Link>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
+        <Link
+          to="/canchas"
+          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition block group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Calendar className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-bold text-slate-800">Turnos en Tiempo Real</h2>
+          <h2 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+            Turnos en Tiempo Real
+          </h2>
           <p className="mt-2 text-sm text-slate-600">
             Visualiza la disponibilidad exacta por franja horaria y tarifas especiales para horas pico y promociones.
           </p>
-        </div>
+        </Link>
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
