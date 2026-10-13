@@ -11,7 +11,8 @@ import {
   MapPin,
   Shield,
   Activity,
-  Grid
+  Grid,
+  UserCheck,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -69,6 +70,7 @@ export const Navbar: React.FC = () => {
       return [
         { label: 'Todas las Sedes', to: '/admin/sedes', icon: MapPin },
         { label: 'Gestión Canchas', to: '/admin/canchas', icon: Grid },
+        { label: 'Admins de Sede', to: '/admin/usuarios', icon: UserCheck },
         { label: 'Rankings', to: '/rankings', icon: Trophy },
         { label: 'Panel Global', to: '/admin', icon: Shield },
       ];

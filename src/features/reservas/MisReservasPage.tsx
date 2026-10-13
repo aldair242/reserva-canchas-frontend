@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useListarMisReservas } from '@/api/endpoints';
+import { Link, useNavigate } from 'react-router-dom';
+import { useListarMisReservas, useCrear2 } from '@/api/endpoints';
 import type { ReservaResponse } from '@/api/model/reservaResponse';
 import { formatearHora, formatearPrecio } from '@/features/canchas/utils/tarifa';
 import { PagoModal } from './components/PagoModal';
@@ -21,16 +21,19 @@ import {
   AlertCircle,
   HelpCircle,
   ArrowRight,
+  Play,
 } from 'lucide-react';
 
 type FiltroEstado = 'TODAS' | 'PENDIENTE' | 'CONFIRMADA' | 'HISTORIAL';
 
 export const MisReservasPage: React.FC = () => {
+  const navigate = useNavigate();
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('TODAS');
 
   const [reservaParaPagar, setReservaParaPagar] = useState<ReservaResponse | null>(null);
   const [reservaParaCancelar, setReservaParaCancelar] = useState<ReservaResponse | null>(null);
   const [reservaParaReprogramar, setReservaParaReprogramar] = useState<ReservaResponse | null>(null);
+  const [errorCrearPartido, setErrorCrearPartido] = useState<string | null>(null);
 
   const {
     data: reservas = [],
@@ -39,6 +42,19 @@ export const MisReservasPage: React.FC = () => {
     error,
     refetch,
   } = useListarMisReservas();
+
+  const crearPartidoMutation = useCrear2({
+    mutation: {
+      onSuccess: () => {
+        setErrorCrearPartido(null);
+        refetch();
+        navigate('/mis-partidos');
+      },
+      onError: (err) => {
+        setErrorCrearPartido(getApiErrorMessage(err, 'No se pudo crear el partido'));
+      },
+    },
+  });
 
   // Filtrado según la pestaña activa
   const reservasFiltradas = useMemo(() => {
@@ -146,6 +162,22 @@ export const MisReservasPage: React.FC = () => {
           );
         })}
       </div>
+
+      {errorCrearPartido && (
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            <span>{errorCrearPartido}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorCrearPartido(null)}
+            className="text-red-500 hover:text-red-700 font-bold"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Estados: Carga, Error, Vacío */}
       {isLoading && (
@@ -288,7 +320,24 @@ export const MisReservasPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* Enlace al partido si existe partidoId (Prompt B / F1 / F2) */}
+                  {/* Crear partido si está confirmada / pagada y no tiene partido aún */}
+                  {!reserva.partidoId && (reserva.estado === 'CONFIRMADA' || reserva.pagada) && (
+                    <button
+                      type="button"
+                      disabled={crearPartidoMutation.isPending}
+                      onClick={() => {
+                        if (reserva.id) {
+                          crearPartidoMutation.mutate({ params: { reservaId: reserva.id } });
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      <span>{crearPartidoMutation.isPending ? 'Creando...' : 'Crear Partido'}</span>
+                    </button>
+                  )}
+
+                  {/* Enlace a Partido si ya existe */}
                   {reserva.partidoId && (
                     <Link
                       to={`/partidos/${reserva.partidoId}`}

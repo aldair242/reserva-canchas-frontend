@@ -26,6 +26,8 @@ import {
   ArrowLeft,
   CalendarDays,
   Sparkles,
+  Video,
+  Lock,
 } from 'lucide-react';
 
 const getFechaHoyISO = (): string => {
@@ -82,16 +84,24 @@ export const CanchaDetallePage: React.FC = () => {
     ];
   }, []);
 
-  // Generar turnos horarios regulares desglosados con precio calculado
+  // Generar turnos horarios regulares del día clasificados con precio calculado
   const turnosDesglosados = useMemo(() => {
-    if (!cancha || !disponibilidadData?.turnosDisponibles) return [];
+    if (!cancha || !disponibilidadData) return [];
     return generarTurnosHorarios(
-      disponibilidadData.turnosDisponibles,
+      disponibilidadData.turnosDisponibles || [],
       cancha,
       fechaSeleccionada,
-      60
+      60,
+      undefined,
+      disponibilidadData.horaApertura,
+      disponibilidadData.horaCierre,
+      disponibilidadData.bloqueos
     );
   }, [cancha, disponibilidadData, fechaSeleccionada]);
+
+  const turnosLibresCount = useMemo(() => {
+    return turnosDesglosados.filter((s) => s.estado === 'DISPONIBLE').length;
+  }, [turnosDesglosados]);
 
   // Manejo de carga de datos principales
   if (cargandoCancha) {
@@ -204,7 +214,7 @@ export const CanchaDetallePage: React.FC = () => {
         </div>
 
         {/* Ficha técnica de la cancha */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100 text-xs text-slate-600">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-slate-100 text-xs text-slate-600">
           <div className="flex items-center gap-1.5">
             <Layers className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Superficie: <strong className="text-slate-800">{cancha.superficie || 'Estándar'}</strong></span>
@@ -238,10 +248,27 @@ export const CanchaDetallePage: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center gap-1.5">
+            <Video className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="text-emerald-700 font-semibold inline-flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Grabación IA
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
               Horario: {disponibilidadData ? `${formatearHora(disponibilidadData.horaApertura)} - ${formatearHora(disponibilidadData.horaCierre)}` : 'Atención regular'}
             </span>
+          </div>
+        </div>
+
+        {/* Banner explicativo de Grabación y Sensores */}
+        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5 text-xs text-emerald-950 flex items-start gap-2.5">
+          <Video className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-bold text-emerald-900">Grabación Inteligente & Sensores de Gol Disponibles:</span>
+            <p className="text-emerald-800 leading-relaxed">
+              Esta cancha está equipada con cámaras deportivas y sensores de arco IoT. Al iniciar el partido tras pagar tu reserva, el sistema inicia automáticamente la grabación continua del juego y genera repeticiones en video (clips de 15s antes y 8s después) de cada gol detectado.
+            </p>
           </div>
         </div>
       </div>
@@ -311,16 +338,29 @@ export const CanchaDetallePage: React.FC = () => {
         </div>
       )}
 
-      {/* Turnos Horarios Disponibles */}
+      {/* Turnos Horarios del Día */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-600" />
-            <span>Turnos Disponibles ({fechaSeleccionada})</span>
-          </h3>
-          <span className="text-xs text-slate-500">
-            {turnosDesglosados.length} {turnosDesglosados.length === 1 ? 'turno libre' : 'turnos libres'}
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-emerald-600" />
+              <span>Turnos del Día ({fechaSeleccionada})</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Los horarios ocupados o transcurridos se muestran en plomo para rápida visualización
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              {turnosLibresCount} disponibles
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+              Ocupados / Pasados en plomo
+            </span>
+          </div>
         </div>
 
         {cargandoDisponibilidad && (
@@ -337,50 +377,159 @@ export const CanchaDetallePage: React.FC = () => {
         {!cargandoDisponibilidad && !errorDisponibilidad && turnosDesglosados.length === 0 && (
           <EmptyState
             titulo="No hay turnos disponibles para esta fecha"
-            descripcion="La cancha ya tiene todas sus horas reservadas o se encuentra cerrada por mantenimiento. Por favor selecciona otra fecha."
+            descripcion="La sede se encuentra cerrada o sin horarios operativos configurados para esta fecha. Por favor selecciona otra fecha."
             icono={<Calendar className="w-8 h-8 text-slate-400" />}
           />
         )}
 
         {!cargandoDisponibilidad && !errorDisponibilidad && turnosDesglosados.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {turnosDesglosados.map((slot, index) => (
-              <div
-                key={`${slot.inicio}-${slot.fin}-${index}`}
-                className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-emerald-300 hover:shadow-md transition flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-extrabold text-slate-800">
-                      {formatearHora(slot.inicio)} - {formatearHora(slot.fin)}
-                    </span>
-                    {slot.esHoraPico && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                        Hora Pico
-                      </span>
-                    )}
-                    {slot.esPromocion && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5" />
-                        Promo
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-lg font-black text-emerald-700 mb-3">
-                    {formatearPrecio(slot.precio)}
-                  </div>
-                </div>
+            {turnosDesglosados.map((slot, index) => {
+              const key = `${slot.inicio}-${slot.fin}-${index}`;
 
-                <button
-                  type="button"
-                  onClick={() => setSlotParaReservar(slot)}
-                  className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5"
+              // Caso 1: Turno Disponible para Reservar
+              if (slot.estado === 'DISPONIBLE') {
+                return (
+                  <div
+                    key={key}
+                    className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-emerald-400 hover:shadow-md transition flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-extrabold text-slate-800">
+                          {formatearHora(slot.inicio)} - {formatearHora(slot.fin)}
+                        </span>
+                        {slot.esHoraPico && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                            Hora Pico
+                          </span>
+                        )}
+                        {slot.esPromocion && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            Promo
+                          </span>
+                        )}
+                        {!slot.esHoraPico && !slot.esPromocion && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Disponible
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-lg font-black text-emerald-700 mb-3">
+                        {formatearPrecio(slot.precio)}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSlotParaReservar(slot)}
+                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Reservar este turno</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // Caso 2: Turno Ocupado / Reservado por otro jugador (EN PLOMO)
+              if (slot.estado === 'OCUPADO') {
+                return (
+                  <div
+                    key={key}
+                    className="bg-slate-100/90 rounded-xl border border-slate-200 p-4 shadow-none opacity-85 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-bold text-slate-600">
+                          {formatearHora(slot.inicio)} - {formatearHora(slot.fin)}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 border border-slate-300">
+                          Reservado
+                        </span>
+                      </div>
+                      <div className="text-base font-bold text-slate-400 mb-3">
+                        {formatearPrecio(slot.precio)}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-2 px-3 bg-slate-200 text-slate-500 text-xs font-bold rounded-lg cursor-not-allowed flex items-center justify-center gap-1.5"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Horario Ocupado</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // Caso 3: Turno que ya pasó hoy (EN PLOMO)
+              if (slot.estado === 'PASADO') {
+                return (
+                  <div
+                    key={key}
+                    className="bg-slate-100/70 rounded-xl border border-slate-200/60 p-4 shadow-none opacity-60 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-slate-400">
+                          {formatearHora(slot.inicio)} - {formatearHora(slot.fin)}
+                        </span>
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-500 border border-slate-300">
+                          Finalizado
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium text-slate-400 mb-3">
+                        {formatearPrecio(slot.precio)}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-2 px-3 bg-slate-200 text-slate-400 text-xs font-medium rounded-lg cursor-not-allowed flex items-center justify-center gap-1.5"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Horario Pasado</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // Caso 4: Bloqueo / Mantenimiento programado (EN PLOMO / ÁMBAR)
+              return (
+                <div
+                  key={key}
+                  className="bg-amber-50/70 rounded-xl border border-amber-200/80 p-4 shadow-none opacity-80 flex flex-col justify-between"
                 >
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Reservar este turno</span>
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-amber-900/70">
+                        {formatearHora(slot.inicio)} - {formatearHora(slot.fin)}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                        Mantenimiento
+                      </span>
+                    </div>
+                    <div className="text-xs text-amber-800/80 mb-3 truncate" title={slot.motivoBloqueo}>
+                      {slot.motivoBloqueo || 'Mantenimiento de cancha'}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-2 px-3 bg-amber-100 text-amber-800 text-xs font-bold rounded-lg cursor-not-allowed flex items-center justify-center gap-1.5"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    <span>No Disponible</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

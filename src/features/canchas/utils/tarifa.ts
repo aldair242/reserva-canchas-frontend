@@ -1,5 +1,6 @@
 import type { CanchaResponse } from '@/api/model/canchaResponse';
 import type { TurnoDisponible } from '@/api/model/turnoDisponible';
+import type { BloqueoInfo } from '@/api/model/bloqueoInfo';
 
 /**
  * Formatea una hora en formato "HH:mm:ss" a "HH:mm".
@@ -126,27 +127,116 @@ export const calcularPrecioTurno = (
   return 0;
 };
 
+export type EstadoTurnoSlot = 'DISPONIBLE' | 'OCUPADO' | 'PASADO' | 'BLOQUEADO';
+
 export interface TurnoSlot {
   inicio: string; // "HH:mm:ss"
   fin: string; // "HH:mm:ss"
   precio: number;
   esHoraPico?: boolean;
   esPromocion?: boolean;
+  estado: EstadoTurnoSlot;
+  motivoBloqueo?: string;
 }
 
 /**
- * Desglosa los rangos de disponibilidad devueltos por el backend en turnos
- * horarios regulares (por defecto 1 hora), calculando el precio de cada uno.
+ * Desglosa los rangos de disponibilidad y la jornada completa de la sede en turnos
+ * horarios regulares (por defecto 1 hora), calculando el precio y el estado de cada uno.
+ * Si se proporcionan horaApertura y horaCierre, genera la grilla completa del día,
+ * clasificando los turnos en DISPONIBLE, OCUPADO (reservado), PASADO o BLOQUEADO (mantenimiento).
  */
 export const generarTurnosHorarios = (
   turnosDisponibles: TurnoDisponible[],
   cancha: CanchaResponse,
   fecha: string,
-  duracionMinutos = 60
+  duracionMinutos = 60,
+  ahoraOverride?: Date,
+  horaApertura?: string,
+  horaCierre?: string,
+  bloqueos?: BloqueoInfo[]
 ): TurnoSlot[] => {
-  if (!turnosDisponibles || turnosDisponibles.length === 0) return [];
-
   const slots: TurnoSlot[] = [];
+  const ahora = ahoraOverride || new Date();
+  const hoyAnio = ahora.getFullYear();
+  const hoyMes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const hoyDia = String(ahora.getDate()).padStart(2, '0');
+  const hoyStr = `${hoyAnio}-${hoyMes}-${hoyDia}`;
+  const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+  const esHoy = fecha === hoyStr;
+
+  // Si se indican horaApertura y horaCierre, generamos la grilla completa de la jornada
+  if (horaApertura && horaCierre) {
+    const aperturaMin = horaAMinutos(horaApertura);
+    const cierreMin = horaAMinutos(horaCierre);
+
+    let actual = aperturaMin;
+    while (actual + duracionMinutos <= cierreMin) {
+      const iniStr = minutosAHora(actual);
+      const finStr = minutosAHora(actual + duracionMinutos);
+      const precio = calcularPrecioTurno(cancha, fecha, iniStr, finStr);
+
+      let esHoraPico = false;
+      if (cancha.tipoTarifa === 'HORA_PICO' && cancha.inicioPico && cancha.finPico) {
+        const pIni = horaAMinutos(cancha.inicioPico);
+        const pFin = horaAMinutos(cancha.finPico);
+        if (actual >= pIni && actual < pFin) {
+          esHoraPico = true;
+        }
+      }
+
+      const esPromocion = cancha.tipoTarifa === 'PROMOCIONAL';
+
+      // Verificar si el turno está completamente contenido dentro de turnosDisponibles
+      const estaDisponible = (turnosDisponibles || []).some((rango) => {
+        if (!rango.inicio || !rango.fin) return false;
+        const rIni = horaAMinutos(rango.inicio);
+        const rFin = horaAMinutos(rango.fin);
+        return rIni <= actual && rFin >= actual + duracionMinutos;
+      });
+
+      // Verificar si el turno colisiona con algún bloqueo de mantenimiento
+      const bloqueoEncontrado = (bloqueos || []).find((b) => {
+        if (!b.inicio || !b.fin) return false;
+        const bIniDate = new Date(b.inicio);
+        const bFinDate = new Date(b.fin);
+        if (!isNaN(bIniDate.getTime()) && !isNaN(bFinDate.getTime())) {
+          const bIniMin = bIniDate.getHours() * 60 + bIniDate.getMinutes();
+          const bFinMin = bFinDate.getHours() * 60 + bFinDate.getMinutes();
+          return actual < bFinMin && actual + duracionMinutos > bIniMin;
+        }
+        return false;
+      });
+
+      let estado: EstadoTurnoSlot = 'DISPONIBLE';
+      let motivoBloqueo: string | undefined;
+
+      if (esHoy && actual <= ahoraMinutos) {
+        estado = 'PASADO';
+      } else if (bloqueoEncontrado) {
+        estado = 'BLOQUEADO';
+        motivoBloqueo = bloqueoEncontrado.motivo || 'Mantenimiento programado';
+      } else if (!estaDisponible) {
+        estado = 'OCUPADO';
+      }
+
+      slots.push({
+        inicio: iniStr,
+        fin: finStr,
+        precio,
+        esHoraPico,
+        esPromocion,
+        estado,
+        motivoBloqueo,
+      });
+
+      actual += duracionMinutos;
+    }
+
+    return slots;
+  }
+
+  // Fallback si no se proveen horaApertura/horaCierre: desglose exclusivo de turnosDisponibles
+  if (!turnosDisponibles || turnosDisponibles.length === 0) return [];
 
   for (const rango of turnosDisponibles) {
     if (!rango.inicio || !rango.fin) continue;
@@ -156,6 +246,12 @@ export const generarTurnosHorarios = (
 
     let actual = rangoIni;
     while (actual + duracionMinutos <= rangoFin) {
+      // Si la fecha es hoy, no permitir turnos que ya hayan comenzado o pasado
+      if (esHoy && actual <= ahoraMinutos) {
+        actual += duracionMinutos;
+        continue;
+      }
+
       const iniStr = minutosAHora(actual);
       const finStr = minutosAHora(actual + duracionMinutos);
       const precio = calcularPrecioTurno(cancha, fecha, iniStr, finStr);
@@ -177,6 +273,7 @@ export const generarTurnosHorarios = (
         precio,
         esHoraPico,
         esPromocion,
+        estado: 'DISPONIBLE',
       });
 
       actual += duracionMinutos;

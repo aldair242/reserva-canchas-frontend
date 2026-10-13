@@ -10,6 +10,15 @@ import { SedesPage } from '@/features/sedes/SedesPage';
 import { CanchasPage } from '@/features/canchas/CanchasPage';
 import { CanchaDetallePage } from '@/features/canchas/CanchaDetallePage';
 import { MisReservasPage } from '@/features/reservas/MisReservasPage';
+import { RankingsPage } from '@/features/rankings/RankingsPage';
+import { PerfilPage } from '@/features/perfil/PerfilPage';
+import { AdminSedesPage } from '@/features/sedes/AdminSedesPage';
+import { AdminCanchasPage } from '@/features/canchas/AdminCanchasPage';
+import { AdminReservasPage } from '@/features/reservas/AdminReservasPage';
+import { AdminGlobalPage } from '@/features/admin/AdminGlobalPage';
+import { AdminUsuariosPage } from '@/features/admin/AdminUsuariosPage';
+import { MisPartidosPage } from '@/features/partidos/MisPartidosPage';
+import { InvitacionDetallePage } from '@/features/partidos/InvitacionDetallePage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
@@ -23,7 +32,18 @@ export const AppRoutes: React.FC = () => {
         <Route path="/sedes" element={<SedesPage />} />
         <Route path="/canchas" element={<CanchasPage />} />
         <Route path="/canchas/:id" element={<CanchaDetallePage />} />
+        <Route path="/invitaciones/:token" element={<InvitacionDetallePage />} />
         <Route path="/403" element={<ForbiddenPage />} />
+
+        {/* Rutas para usuarios autenticados */}
+        <Route
+          path="/rankings"
+          element={
+            <ProtectedRoute>
+              <RankingsPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Rutas protegidas para JUGADOR */}
         <Route
@@ -38,9 +58,15 @@ export const AppRoutes: React.FC = () => {
           path="/mis-partidos"
           element={
             <ProtectedRoute rolesPermitidos={['JUGADOR']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Mis Partidos (Jugador)</h1>
-              </div>
+              <MisPartidosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/partidos/:id"
+          element={
+            <ProtectedRoute rolesPermitidos={['JUGADOR']}>
+              <MisPartidosPage />
             </ProtectedRoute>
           }
         />
@@ -48,9 +74,7 @@ export const AppRoutes: React.FC = () => {
           path="/perfil"
           element={
             <ProtectedRoute rolesPermitidos={['JUGADOR']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Mi Perfil de Jugador</h1>
-              </div>
+              <PerfilPage />
             </ProtectedRoute>
           }
         />
@@ -60,9 +84,7 @@ export const AppRoutes: React.FC = () => {
           path="/admin/sedes"
           element={
             <ProtectedRoute rolesPermitidos={['ADMIN_SEDE', 'ADMIN']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Panel de Sedes</h1>
-              </div>
+              <AdminSedesPage />
             </ProtectedRoute>
           }
         />
@@ -70,9 +92,7 @@ export const AppRoutes: React.FC = () => {
           path="/admin/canchas"
           element={
             <ProtectedRoute rolesPermitidos={['ADMIN_SEDE', 'ADMIN']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Panel de Canchas</h1>
-              </div>
+              <AdminCanchasPage />
             </ProtectedRoute>
           }
         />
@@ -80,9 +100,7 @@ export const AppRoutes: React.FC = () => {
           path="/admin/reservas"
           element={
             <ProtectedRoute rolesPermitidos={['ADMIN_SEDE', 'ADMIN']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Reservas de la Sede</h1>
-              </div>
+              <AdminReservasPage />
             </ProtectedRoute>
           }
         />
@@ -92,9 +110,15 @@ export const AppRoutes: React.FC = () => {
           path="/admin"
           element={
             <ProtectedRoute rolesPermitidos={['ADMIN']}>
-              <div className="p-4 bg-white rounded-xl border border-slate-200">
-                <h1 className="text-xl font-bold">Panel de Administración Global</h1>
-              </div>
+              <AdminGlobalPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/usuarios"
+          element={
+            <ProtectedRoute rolesPermitidos={['ADMIN']}>
+              <AdminUsuariosPage />
             </ProtectedRoute>
           }
         />
