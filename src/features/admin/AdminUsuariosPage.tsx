@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   useListarAdministradoresSede,
+  useEliminarAdministradorSede,
   type AdministradorSedeResponse,
 } from './adminUsuariosApi';
 import { CrearAdminSedeModal } from './components/CrearAdminSedeModal';
@@ -16,12 +17,19 @@ import {
   Phone,
   ShieldCheck,
   CheckCircle2,
+  Pencil,
+  Trash2,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 
 export const AdminUsuariosPage: React.FC = () => {
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [adminAEditar, setAdminAEditar] = useState<AdministradorSedeResponse | null>(null);
+  const [adminAEliminar, setAdminAEliminar] = useState<AdministradorSedeResponse | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [mensajeErrorEliminar, setMensajeErrorEliminar] = useState<string | null>(null);
 
   const {
     data: administradores = [],
@@ -31,11 +39,28 @@ export const AdminUsuariosPage: React.FC = () => {
     refetch,
   } = useListarAdministradoresSede();
 
+  const eliminarMutation = useEliminarAdministradorSede({
+    onSuccess: () => {
+      const nombreEliminado = adminAEliminar
+        ? `${adminAEliminar.nombre} ${adminAEliminar.apellido}`
+        : 'Usuario';
+      setAdminAEliminar(null);
+      setMensajeErrorEliminar(null);
+      mostrarExito(`Administrador ${nombreEliminado} eliminado correctamente. Sus sedes quedaron a salvo y desvinculadas.`);
+      refetch();
+    },
+    onError: (err) => {
+      setMensajeErrorEliminar(
+        getApiErrorMessage(err, 'No se pudo eliminar el administrador de sede.')
+      );
+    },
+  });
+
   const mostrarExito = (msg: string) => {
     setMensajeExito(msg);
     setTimeout(() => {
       setMensajeExito(null);
-    }, 4000);
+    }, 4500);
   };
 
   const administradoresFiltrados = useMemo(() => {
@@ -50,10 +75,32 @@ export const AdminUsuariosPage: React.FC = () => {
     );
   }, [administradores, busqueda]);
 
-  const handleExitoCreacion = (nuevoAdmin: AdministradorSedeResponse) => {
+  const handleAbrirCrear = () => {
+    setAdminAEditar(null);
+    setModalAbierto(true);
+  };
+
+  const handleAbrirEditar = (admin: AdministradorSedeResponse) => {
+    setAdminAEditar(admin);
+    setModalAbierto(true);
+  };
+
+  const handleExitoModal = (admin: AdministradorSedeResponse) => {
+    const eraEdicion = Boolean(adminAEditar);
     setModalAbierto(false);
-    mostrarExito(`Administrador de sede ${nuevoAdmin.nombre} ${nuevoAdmin.apellido} creado exitosamente.`);
+    setAdminAEditar(null);
+    mostrarExito(
+      eraEdicion
+        ? `Administrador de sede ${admin.nombre} ${admin.apellido} modificado exitosamente.`
+        : `Administrador de sede ${admin.nombre} ${admin.apellido} creado exitosamente.`
+    );
     refetch();
+  };
+
+  const handleConfirmarEliminar = () => {
+    if (!adminAEliminar) return;
+    setMensajeErrorEliminar(null);
+    eliminarMutation.mutate(adminAEliminar.id);
   };
 
   return (
@@ -69,13 +116,13 @@ export const AdminUsuariosPage: React.FC = () => {
             Administradores de Sede
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Registra y gestiona las cuentas autorizadas para administrar complejos deportivos y canchas.
+            Registra, modifica credenciales y gestiona las cuentas autorizadas para administrar complejos deportivos.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => setModalAbierto(true)}
+          onClick={handleAbrirCrear}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl shadow-sm transition shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -121,7 +168,7 @@ export const AdminUsuariosPage: React.FC = () => {
         />
       )}
 
-      {/* Listado */}
+      {/* Listado vacío */}
       {!isLoading && !isError && administradoresFiltrados.length === 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4 shadow-sm">
           <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
@@ -139,7 +186,7 @@ export const AdminUsuariosPage: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={() => setModalAbierto(true)}
+            onClick={handleAbrirCrear}
             className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow-sm transition"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -148,6 +195,7 @@ export const AdminUsuariosPage: React.FC = () => {
         </div>
       )}
 
+      {/* Listado con Cards */}
       {!isLoading && !isError && administradoresFiltrados.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {administradoresFiltrados.map((admin) => (
@@ -172,12 +220,17 @@ export const AdminUsuariosPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <span
-                    className={`inline-block w-2.5 h-2.5 rounded-full ${
-                      admin.activo ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                    title={admin.activo ? 'Usuario Activo' : 'Usuario Inactivo'}
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`inline-block w-2.5 h-2.5 rounded-full ${
+                        admin.activo ? 'bg-emerald-500' : 'bg-slate-300'
+                      }`}
+                      title={admin.activo ? 'Usuario Activo' : 'Usuario Inactivo'}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      {admin.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
@@ -215,19 +268,118 @@ export const AdminUsuariosPage: React.FC = () => {
                   </p>
                 )}
               </div>
+
+              {/* Barra de Acciones: Editar y Eliminar */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAbrirEditar(admin)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 hover:border-purple-300 hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-xs font-semibold rounded-lg transition"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Modificar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminAEliminar(admin)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-semibold rounded-lg transition"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Eliminar</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Modal para Crear Administrador de Sede */}
+      {/* Modal para Crear / Editar Administrador de Sede */}
       {modalAbierto && (
         <CrearAdminSedeModal
-          onClose={() => setModalAbierto(false)}
-          onSuccess={handleExitoCreacion}
+          onClose={() => {
+            setModalAbierto(false);
+            setAdminAEditar(null);
+          }}
+          onSuccess={handleExitoModal}
+          adminAEditar={adminAEditar}
         />
+      )}
+
+      {/* Modal de Confirmación para Eliminar */}
+      {adminAEliminar && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">
+                  ¿Eliminar Administrador de Sede?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Esta acción eliminará el usuario y revocará sus accesos.
+                </p>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+              <p>
+                Estás a punto de eliminar al administrador:{' '}
+                <strong className="text-slate-800">
+                  {adminAEliminar.nombre} {adminAEliminar.apellido}
+                </strong>{' '}
+                ({adminAEliminar.correo}).
+              </p>
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                ✓ <strong>Protección de datos:</strong> Las sedes, canchas y reservas asociadas permanecerán intactas y seguras en el sistema, quedando disponibles para ser reasignadas.
+              </p>
+            </div>
+
+            {mensajeErrorEliminar && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+                {mensajeErrorEliminar}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminAEliminar(null);
+                  setMensajeErrorEliminar(null);
+                }}
+                disabled={eliminarMutation.isPending}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarEliminar}
+                disabled={eliminarMutation.isPending}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm transition disabled:opacity-50"
+              >
+                {eliminarMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Sí, Eliminar</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 };
-

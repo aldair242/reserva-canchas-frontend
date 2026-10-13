@@ -48,3 +48,43 @@ export const useCrearAdministradorSede = (options?: {
   });
 };
 
+export interface ActualizarAdminSedeRequest {
+  nombre: string;
+  apellido: string;
+  correo: string;
+  password?: string;
+  telefono: string;
+  activo?: boolean;
+}
+
+export const useActualizarAdministradorSede = (options?: {
+  onSuccess?: (data: AdministradorSedeResponse) => void;
+  onError?: (err: unknown) => void;
+}) => {
+  return useMutation<AdministradorSedeResponse, unknown, { id: number; data: ActualizarAdminSedeRequest }>({
+    mutationFn: ({ id, data }) =>
+      customInstance<AdministradorSedeResponse>({
+        url: `/api/admin/usuarios/administradores-sede/${id}`,
+        method: 'PUT',
+        data,
+      }),
+    onSuccess: options?.onSuccess,
+    onError: options?.onError,
+  });
+};
+
+export const useEliminarAdministradorSede = (options?: {
+  onSuccess?: () => void;
+  onError?: (err: unknown) => void;
+}) => {
+  return useMutation<void, unknown, number>({
+    mutationFn: (id) =>
+      customInstance<void>({
+        url: `/api/admin/usuarios/administradores-sede/${id}`,
+        method: 'DELETE',
+      }),
+    onSuccess: options?.onSuccess,
+    onError: options?.onError,
+  });
+};
+
