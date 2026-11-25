@@ -1,37 +1,29 @@
-# Pendientes y Observaciones del Backend
+# Pendientes y Comportamientos del Backend (PENDIENTES_BACKEND.md)
 
-Este documento registra los campos y requerimientos detectados que **no están presentes en el contrato OpenAPI real** (`docs/openapi.json`), siguiendo estrictamente la regla de **no inventar datos, campos ni simular respuestas falsas en el frontend**.
-
----
-
-## 1. Campos Faltantes en `ReservaResponse`
-- **Expiración / Tiempo límite para pagar**:
-  - `ReservaResponse` contiene `estado` (`PENDIENTE`, `CONFIRMADA`, etc.), `fecha`, `horaInicio`, `horaFin`, `pagada`, pero **no** incluye un campo como `tiempoLimitePago`, `expiracionPago` o `fechaLimite`.
-  - **Manejo en frontend**: Se muestra el estado de la reserva (`PENDIENTE` o `PAGADA`) y las reglas generales de cancelación (política de 2 horas previas calculada respecto a la fecha y hora de inicio de la reserva). Si se requiere un contador regresivo de expiración del pago pendiente, el backend debe exponer la marca temporal exacta de vencimiento.
-- **Montos de Reembolso y Diferencias de Tarifa en Cancelación / Reprogramación**:
-  - `ReservaResponse` contiene únicamente `precioTotal: number` y `motivoCancelacion: string`. No existen campos como `montoReembolso`, `porcentajePenalidad`, ni `diferenciaTarifa` o `saldoPendiente` resultantes de reprogramar a un turno con tarifa distinta.
-  - **Manejo en frontend**: Se informa claramente el `precioTotal` del turno y el resultado de la operación sin inventar cálculos de reembolso ni saldos a favor no respaldados por la API.
+Documento de seguimiento de limitaciones y particularidades encontradas en los contratos y servicios de la API REST de Spring Boot (`http://localhost:8080`).
 
 ---
 
-## 2. Endpoints de Administradores de Sede (Confirmados e Integrados)
-- **Estado**: **Confirmado en el OpenAPI oficial**.
-  - `GET /api/admin/usuarios/administradores-sede` (`listarAdministradoresSede`)
-  - `POST /api/admin/usuarios/administradores-sede` (`crearAdministradorSede`)
-  - `PUT /api/admin/usuarios/administradores-sede/{id}` (`actualizarAdministradorSede`)
-  - `DELETE /api/admin/usuarios/administradores-sede/{id}` (`eliminarAdministradorSede`)
-- **Integración**: Se consumen exclusivamente a través de los clientes generados por Orval en `@/api/endpoints`.
+## 1. Modelo `ReservaResponse`
+- **Campos Ausentes**: No expone `fechaExpiracionPago`, `porcentajePenalidadCancelacion`, ni `montoReembolso`.
+- **Manejo en Frontend**:
+  - Se implementó la regla de negocio de **cancelación y reprogramación hasta 2 horas antes** del horario de inicio directamente en la UI.
+  - El modal de pago calcula el saldo y procesa la transacción de forma inmediata conectada al endpoint `POST /api/reservas/{id}/pagar`.
 
----
+## 2. Validación de Atribución de Goles (`PUT /api/eventos/{id}/atribuir`)
+- **Regla del Backend**: Exige que el atribuidor sea un usuario autenticado con rol `JUGADOR` que pertenezca a la colección `partido.getParticipantes()`.
+- **Comportamiento Detectado**: Al crearse el partido mediante `POST /api/partidos`, el primer participante se persiste como una referencia abstracta a la tabla `personas`. En tiempo de ejecución en Hibernate, si la entidad se recupera mediante un proxy de `Persona`, la verificación interna `p.getPersona() instanceof Jugador` evalúa a `false`, devolviendo el mensaje de error:
+  > *"Debe ser participante del partido para realizar esta accion"*
+- **Manejo en Frontend**: El frontend implementa correctamente el envío del `anotadorId` del participante seleccionado y maneja la captura de errores HTTP 400 informando al usuario el motivo sin romper la interfaz.
 
-## 3. Consulta Global de Partidos para Administradores
-- **Estado**: La API expone `GET /api/partidos/mis` (del usuario en sesión) y `GET /api/partidos/{id}`. No cuenta con un listado global `GET /api/partidos` para listar todos los partidos de una sede o fecha en el panel administrativo.
-- **Manejo en frontend**: Se accede al detalle de partido por ID (`/partidos/:id`), y el jugador visualiza sus propios partidos en `Mis Partidos`. La pantalla de Demo YOLO permite interactuar con un partido seleccionando su identificador.
+## 3. Confirmación de Eventos (`PUT /api/eventos/{id}/confirmar`)
+- **Regla de Negocio Estricta**: No permite confirmar un gol si previamente no cuenta con un atribuidor registrado (`evento.getAtribuidor() != null`).
+- **Confirmador Rival**: El confirmador debe ser un participante del equipo contrario y diferente del que realizó la atribución.
 
----
+## 4. Consulta de Invitación (`GET /api/invitaciones/{token}`)
+- **Vigencia del Token**: El endpoint devuelve HTTP 400 (*"La invitación ha vencido o el partido ya no está en estado programado"*) en cuanto el partido pasa al estado `EN_JUEGO` o `FINALIZADO`.
+- **Manejo en Frontend**: Se muestra el banner informativo explicativo cuando el token ha dejado de aceptar nuevos registros.
 
-## 4. Streaming y Simulación YOLO
-- **Estado**: La ingesta e inferencia se gestiona vía:
-  - `POST /api/sensores/yolo/partidos/{partidoId}/deteccion`
-  - `POST /api/sensores/yolo/camaras/{camaraId}/deteccion`
-- **Manejo en frontend**: Se implementa la consola de control y disparo de detecciones protegida por rol usando el token JWT del administrador autenticado, sin solicitar ni almacenar `claveApi` en el navegador, mostrando la etiqueta `SIMULADO`.
+## 5. Permisos de Detección YOLO
+- **Seguridad**: Los endpoints `/api/sensores/yolo/partidos/{id}/deteccion` y `/api/sensores/yolo/camaras/{id}/deteccion` devuelven HTTP 403 (*"No tiene permisos para gestionar esta sede"*) si se intentan invocar con un JWT de rol `JUGADOR`. Requieren obligatoriamente credenciales de `ADMIN` o del `ADMIN_SEDE` asignado a dicho complejo deportivo.
+- **Manejo en Frontend**: Se protegió la ruta `/admin/yolo` exclusivamente para administradores, empleando su propio token de sesión sin requerir `claveApi` en el cliente.
