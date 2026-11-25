@@ -80,30 +80,34 @@ export const CrearAdminSedeModal: React.FC<CrearAdminSedeModalProps> = ({
   });
 
   const crearMutation = useCrearAdministradorSede({
-    onSuccess: (data) => {
-      onSuccess(data);
-    },
-    onError: (err) => {
-      setErrorMensaje(
-        getApiErrorMessage(
-          err,
-          'No se pudo registrar el Administrador de Sede. Verifica que el correo no esté en uso.'
-        )
-      );
+    mutation: {
+      onSuccess: (data: AdministradorSedeResponse) => {
+        onSuccess(data);
+      },
+      onError: (err: unknown) => {
+        setErrorMensaje(
+          getApiErrorMessage(
+            err,
+            'No se pudo registrar el Administrador de Sede. Verifica que el correo no esté en uso.'
+          )
+        );
+      },
     },
   });
 
   const actualizarMutation = useActualizarAdministradorSede({
-    onSuccess: (data) => {
-      onSuccess(data);
-    },
-    onError: (err) => {
-      setErrorMensaje(
-        getApiErrorMessage(
-          err,
-          'No se pudo actualizar el Administrador de Sede. Verifica que el correo no esté en uso.'
-        )
-      );
+    mutation: {
+      onSuccess: (data: AdministradorSedeResponse) => {
+        onSuccess(data);
+      },
+      onError: (err: unknown) => {
+        setErrorMensaje(
+          getApiErrorMessage(
+            err,
+            'No se pudo actualizar el Administrador de Sede. Verifica que el correo no esté en uso.'
+          )
+        );
+      },
     },
   });
 
@@ -111,7 +115,7 @@ export const CrearAdminSedeModal: React.FC<CrearAdminSedeModalProps> = ({
 
   const onSubmit = (formData: AdminSedeFormData) => {
     setErrorMensaje(null);
-    if (isEdit && adminAEditar) {
+    if (isEdit && adminAEditar && adminAEditar.id) {
       const payload: ActualizarAdminSedeRequest = {
         nombre: formData.nombre.trim(),
         apellido: formData.apellido.trim(),
@@ -129,7 +133,7 @@ export const CrearAdminSedeModal: React.FC<CrearAdminSedeModalProps> = ({
         password: formData.password || '',
         telefono: formData.telefono.trim(),
       };
-      crearMutation.mutate(payload);
+      crearMutation.mutate({ data: payload });
     }
   };
 

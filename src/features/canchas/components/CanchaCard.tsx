@@ -1,15 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { CanchaResponse } from '@/api/model/canchaResponse';
-import { formatearHora, formatearPrecio } from '../utils/tarifa';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import {
-  Sun,
-  Shield,
-  Layers,
+  SunMedium,
+  Zap,
+  MapPin,
   Calendar,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
 } from 'lucide-react';
 
 interface CanchaCardProps {
@@ -17,245 +15,166 @@ interface CanchaCardProps {
 }
 
 export const CanchaCard: React.FC<CanchaCardProps> = ({ cancha }) => {
-  // Configuración visual por disciplina deportiva
-  const getDeporteInfo = (dep?: string) => {
+  // Configuración de imagen deportiva ilustrativa sobria según el deporte
+  const getDeporteVisual = (dep?: string) => {
     switch (dep) {
       case 'FUTBOL':
         return {
           label: 'Fútbol',
-          emoji: '⚽',
-          color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+          badgeBg: 'bg-turf-100 text-turf-900 border-turf-200',
+          grad: 'from-emerald-950 via-turf-950 to-navy-950',
+          accent: 'border-l-4 border-turf-600',
         };
       case 'BASQUET':
         return {
           label: 'Básquet',
-          emoji: '🏀',
-          color: 'bg-orange-100 text-orange-800 border-orange-200',
+          badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
+          grad: 'from-amber-950 via-navy-950 to-navy-900',
+          accent: 'border-l-4 border-amber-500',
         };
       case 'VOLEY':
         return {
           label: 'Vóley',
-          emoji: '🏐',
-          color: 'bg-sky-100 text-sky-800 border-sky-200',
+          badgeBg: 'bg-sky-100 text-sky-900 border-sky-200',
+          grad: 'from-sky-950 via-navy-950 to-navy-900',
+          accent: 'border-l-4 border-sky-500',
         };
       case 'PADEL':
         return {
           label: 'Pádel',
-          emoji: '🎾',
-          color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+          badgeBg: 'bg-indigo-100 text-indigo-900 border-indigo-200',
+          grad: 'from-indigo-950 via-navy-950 to-navy-900',
+          accent: 'border-l-4 border-indigo-500',
         };
       default:
         return {
           label: dep || 'Deporte',
-          emoji: '🏆',
-          color: 'bg-slate-100 text-slate-800 border-slate-200',
+          badgeBg: 'bg-navy-100 text-navy-800 border-navy-200',
+          grad: 'from-navy-950 via-navy-900 to-navy-800',
+          accent: 'border-l-4 border-navy-500',
         };
     }
   };
 
-  const deporteInfo = getDeporteInfo(cancha.deporte);
+  const visual = getDeporteVisual(cancha.deporte);
 
-  // Características específicas según disciplina deportiva
-  const renderDetallesDeporte = () => {
+  const getFormatoLabel = () => {
     if (cancha.deporte === 'FUTBOL' && cancha.formato) {
-      const formatoLabels: Record<string, string> = {
+      const map: Record<string, string> = {
         FUTBOL_5: 'Fútbol 5',
         FUTBOL_7: 'Fútbol 7',
         FUTBOL_11: 'Fútbol 11',
       };
-      return (
-        <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-          Formato: {formatoLabels[cancha.formato] || cancha.formato}
-        </span>
-      );
+      return map[cancha.formato] || cancha.formato;
     }
-
     if (cancha.deporte === 'BASQUET') {
-      return (
-        <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
-          {cancha.medioCampo ? 'Medio campo' : 'Cancha completa'}
-        </span>
-      );
+      return cancha.medioCampo ? 'Medio campo' : 'Cancha completa';
     }
-
     if (cancha.deporte === 'VOLEY') {
-      return (
-        <div className="flex flex-wrap gap-1">
-          {cancha.esDePlaya ? (
-            <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-              Vóley playa
-            </span>
-          ) : (
-            <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
-              Vóley pista
-            </span>
-          )}
-          {cancha.alturaRed && (
-            <span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200">
-              Red: {cancha.alturaRed}m
-            </span>
-          )}
-        </div>
-      );
+      return cancha.esDePlaya ? 'Vóley playa' : 'Piso reglamentario';
     }
-
     if (cancha.deporte === 'PADEL') {
-      return (
-        <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-          {cancha.paredesDeVidrio ? 'Cristal panorámico' : 'Paredes estándar'}
-        </span>
-      );
+      return cancha.paredesDeVidrio ? 'Paredes de cristal' : 'Malla metálica';
     }
-
     return null;
   };
 
-  // Formato de superficie legible
-  const formatSuperficie = (sup?: string) => {
-    switch (sup) {
-      case 'CESPED_SINTETICO':
-        return 'Césped sintético';
-      case 'CESPED_NATURAL':
-        return 'Césped natural';
-      case 'PARQUET':
-        return 'Parquet';
-      case 'LOSA':
-        return 'Losa de concreto';
-      case 'ARCILLA':
-        return 'Arcilla';
-      default:
-        return sup || 'Estándar';
-    }
-  };
+  const formatoEspecifico = getFormatoLabel();
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden">
-      {/* Cabecera de la tarjeta */}
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span
-                className={`text-xs font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${deporteInfo.color}`}
-              >
-                <span>{deporteInfo.emoji}</span>
-                <span>{deporteInfo.label}</span>
+    <Card variant="elevated" className={`flex flex-col justify-between overflow-hidden group ${visual.accent}`}>
+      {/* Cabecera visual con banner deportivo */}
+      <div className={`relative h-32 bg-gradient-to-r ${visual.grad} p-4 flex flex-col justify-between text-white overflow-hidden`}>
+        {/* Trazado decorativo sutil */}
+        <div
+          className="absolute inset-0 opacity-15 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 100% 0%, #a3e635 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+          aria-hidden="true"
+        />
+
+        <div className="relative flex items-center justify-between gap-2 z-10">
+          <span className={`text-[11px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm ${visual.badgeBg}`}>
+            {visual.label}
+          </span>
+          <div className="flex items-center gap-1.5">
+            {cancha.iluminacion && (
+              <span className="p-1 rounded-md bg-white/20 text-limeAccent-300 backdrop-blur-xs" title="Iluminación nocturna habilitada">
+                <Zap className="w-3.5 h-3.5" />
               </span>
-              {renderDetallesDeporte()}
-            </div>
-            <h3 className="text-lg font-bold text-slate-800 leading-tight">
-              {cancha.nombre}
-            </h3>
-            {cancha.sedeNombre && (
-              <p className="text-xs text-slate-500 mt-0.5">
-                Sede: <span className="font-medium text-slate-700">{cancha.sedeNombre}</span>
-              </p>
             )}
-          </div>
-        </div>
-
-        {/* Atributos: Superficie, Techada, Iluminación */}
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span className="truncate">{formatSuperficie(cancha.superficie)}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span>
-              {cancha.techada ? (
-                <span className="text-emerald-700 font-medium inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Techada
-                </span>
-              ) : (
-                <span className="text-slate-500 inline-flex items-center gap-1">
-                  <XCircle className="w-3 h-3 text-slate-400" /> Al aire libre
-                </span>
-              )}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 col-span-2">
-            <Sun className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span>
-              {cancha.iluminacion ? (
-                <span className="text-emerald-700 font-medium inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Con iluminación nocturna
-                </span>
-              ) : (
-                <span className="text-slate-500 inline-flex items-center gap-1">
-                  <XCircle className="w-3 h-3 text-slate-400" /> Sin iluminación
-                </span>
-              )}
+            <span className="p-1 rounded-md bg-white/20 text-white backdrop-blur-xs" title={cancha.techada ? 'Techada' : 'Al aire libre'}>
+              <SunMedium className="w-3.5 h-3.5" />
             </span>
           </div>
         </div>
 
-        {/* Sección de Tarifas */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex-1 flex flex-col justify-end">
-          {cancha.tipoTarifa === 'ESTANDAR' && (
-            <div>
-              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">
-                Tarifa Estándar
-              </span>
-              <div className="text-lg font-extrabold text-slate-800">
-                {formatearPrecio(cancha.precioHora)}{' '}
-                <span className="text-xs font-normal text-slate-500">/ hora</span>
-              </div>
-            </div>
-          )}
-
-          {cancha.tipoTarifa === 'HORA_PICO' && (
-            <div>
-              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">
-                Tarifa Diferenciada
-              </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-base font-bold text-slate-800">
-                  {formatearPrecio(cancha.precioNormal)}
-                  <span className="text-xs font-normal text-slate-500"> /h</span>
-                </span>
-                <span className="text-xs font-semibold text-rose-600">
-                  Pico: {formatearPrecio(cancha.precioPico)}
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    {' '}({formatearHora(cancha.inicioPico)} a {formatearHora(cancha.finPico)})
-                  </span>
-                </span>
-              </div>
-            </div>
-          )}
-
-          {cancha.tipoTarifa === 'PROMOCIONAL' && (
-            <div>
-              <div className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full mb-1">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                {cancha.porcentajeDescuento}% de descuento
-              </div>
-              <div className="text-lg font-extrabold text-slate-800">
-                {formatearPrecio(
-                  (cancha.precioHora || 0) * (1 - (cancha.porcentajeDescuento || 0) / 100)
-                )}{' '}
-                <span className="text-xs font-normal text-slate-400 line-through">
-                  {formatearPrecio(cancha.precioHora)}
-                </span>
-                <span className="text-xs font-normal text-slate-500"> / hora</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Botón de Acción */}
-        <div className="mt-4 pt-3">
-          <Link
-            to={`/canchas/${cancha.id}`}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Ver disponibilidad y reservar</span>
-          </Link>
+        <div className="relative z-10">
+          <p className="text-xs text-navy-200 flex items-center gap-1 font-medium">
+            <MapPin className="w-3.5 h-3.5 text-turf-400 shrink-0" />
+            <span className="truncate">{cancha.sedeNombre || 'Sede Deportiva'}</span>
+          </p>
         </div>
       </div>
-    </div>
+
+      {/* Contenido descriptivo */}
+      <div className="p-5 space-y-4 flex-1">
+        <div>
+          <h3 className="font-display font-bold text-lg text-navy-950 group-hover:text-turf-700 transition-colors">
+            {cancha.nombre}
+          </h3>
+          {formatoEspecifico && (
+            <p className="text-xs font-semibold text-navy-600 mt-0.5">
+              {formatoEspecifico}
+            </p>
+          )}
+        </div>
+
+        {/* Ficha técnica resumida */}
+        <div className="grid grid-cols-2 gap-2 text-xs text-navy-600 bg-navy-50/70 p-3 rounded-xl border border-navy-100">
+          <div>
+            <span className="text-[10px] text-navy-400 uppercase font-semibold block">Superficie</span>
+            <span className="font-medium text-navy-800 truncate block">
+              {cancha.superficie || 'Sintético'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] text-navy-400 uppercase font-semibold block">Cubierta</span>
+            <span className="font-medium text-navy-800 block">
+              {cancha.techada ? 'Techada' : 'Al aire libre'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] text-navy-400 uppercase font-semibold block">Iluminación</span>
+            <span className="font-medium text-navy-800 block">
+              {cancha.iluminacion ? 'Habilitada' : 'No cuenta'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] text-navy-400 uppercase font-semibold block">Tarifa Base</span>
+            <span className="font-bold text-turf-700 block">
+              S/. {(cancha.precioHora || cancha.precioNormal || 0).toFixed(2)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pie de acción */}
+      <div className="p-4 bg-navy-50/60 border-t border-navy-100 flex items-center justify-between gap-3">
+        <div>
+          <span className="text-[10px] font-medium text-navy-500 block">Precio por hora</span>
+          <span className="font-display font-extrabold text-base text-navy-950">
+            S/. {(cancha.precioHora || cancha.precioNormal || 0).toFixed(2)}
+          </span>
+        </div>
+        <Link to={`/canchas/${cancha.id}`}>
+          <Button variant="primary" size="sm" icon={<Calendar className="w-3.5 h-3.5" />}>
+            Reservar Turno
+          </Button>
+        </Link>
+      </div>
+    </Card>
   );
 };

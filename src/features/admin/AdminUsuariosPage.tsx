@@ -40,19 +40,21 @@ export const AdminUsuariosPage: React.FC = () => {
   } = useListarAdministradoresSede();
 
   const eliminarMutation = useEliminarAdministradorSede({
-    onSuccess: () => {
-      const nombreEliminado = adminAEliminar
-        ? `${adminAEliminar.nombre} ${adminAEliminar.apellido}`
-        : 'Usuario';
-      setAdminAEliminar(null);
-      setMensajeErrorEliminar(null);
-      mostrarExito(`Administrador ${nombreEliminado} eliminado correctamente. Sus sedes quedaron a salvo y desvinculadas.`);
-      refetch();
-    },
-    onError: (err) => {
-      setMensajeErrorEliminar(
-        getApiErrorMessage(err, 'No se pudo eliminar el administrador de sede.')
-      );
+    mutation: {
+      onSuccess: () => {
+        const nombreEliminado = adminAEliminar
+          ? `${adminAEliminar.nombre || ''} ${adminAEliminar.apellido || ''}`.trim()
+          : 'Usuario';
+        setAdminAEliminar(null);
+        setMensajeErrorEliminar(null);
+        mostrarExito(`Administrador ${nombreEliminado} eliminado correctamente. Sus sedes quedaron a salvo y desvinculadas.`);
+        refetch();
+      },
+      onError: (err: unknown) => {
+        setMensajeErrorEliminar(
+          getApiErrorMessage(err, 'No se pudo eliminar el administrador de sede.')
+        );
+      },
     },
   });
 
@@ -91,16 +93,16 @@ export const AdminUsuariosPage: React.FC = () => {
     setAdminAEditar(null);
     mostrarExito(
       eraEdicion
-        ? `Administrador de sede ${admin.nombre} ${admin.apellido} modificado exitosamente.`
-        : `Administrador de sede ${admin.nombre} ${admin.apellido} creado exitosamente.`
+        ? `Administrador de sede ${admin.nombre || ''} ${admin.apellido || ''} modificado exitosamente.`
+        : `Administrador de sede ${admin.nombre || ''} ${admin.apellido || ''} creado exitosamente.`
     );
     refetch();
   };
 
   const handleConfirmarEliminar = () => {
-    if (!adminAEliminar) return;
+    if (!adminAEliminar || !adminAEliminar.id) return;
     setMensajeErrorEliminar(null);
-    eliminarMutation.mutate(adminAEliminar.id);
+    eliminarMutation.mutate({ id: adminAEliminar.id });
   };
 
   return (
@@ -207,12 +209,12 @@ export const AdminUsuariosPage: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
-                      {admin.nombre.charAt(0)}
-                      {admin.apellido.charAt(0)}
+                      {(admin.nombre || 'U').charAt(0)}
+                      {(admin.apellido || '').charAt(0)}
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-800 text-sm">
-                        {admin.nombre} {admin.apellido}
+                        {admin.nombre || ''} {admin.apellido || ''}
                       </h3>
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 mt-0.5">
                         <ShieldCheck className="w-3 h-3" />

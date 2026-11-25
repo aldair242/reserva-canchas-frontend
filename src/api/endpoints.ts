@@ -25,6 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ActualizarAdminSedeRequest,
+  AdministradorSedeResponse,
   AtribuirRequest,
   AuthResponse,
   BloqueoCanchaRequest,
@@ -34,6 +36,8 @@ import type {
   ClipDetalleResponse,
   ClipResponse,
   Crear2Params,
+  CrearAdminSedeRequest,
+  DeteccionYoloRequest,
   DisponibilidadParams,
   DisponibilidadResponse,
   DispositivoRegistroResponse,
@@ -49,9 +53,11 @@ import type {
   ListarReservasPorSedeParams,
   ListarTodas1Params,
   LoginRequest,
+  ObtenerEnlaceReclamo200,
   ObtenerEstadisticasParams,
   PagoRequest,
   ParticipanteRequest,
+  ParticipanteResponse,
   PartidoResponse,
   RankingEntry,
   RankingParams,
@@ -63,7 +69,8 @@ import type {
   ReservaResponse,
   SedeRequest,
   SedeResponse,
-  ServirArchivoParams
+  ServirArchivoParams,
+  UnirsePartidoRequest
 } from './model';
 
 import { customInstance } from '../lib/api-client';
@@ -1097,6 +1104,269 @@ export const useEliminar1 = <TError = ErrorType<void>,
     }
     
 /**
+ * Permite al Administrador General actualizar datos o credenciales de un Administrador de Sede.
+ * @summary Modificar Administrador de Sede
+ */
+export const actualizarAdministradorSede = (
+    id: number,
+    actualizarAdminSedeRequest: BodyType<ActualizarAdminSedeRequest>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<AdministradorSedeResponse>(
+      {url: `/api/admin/usuarios/administradores-sede/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: actualizarAdminSedeRequest
+    },
+      options);
+    }
+  
+
+
+export const getActualizarAdministradorSedeMutationOptions = <TError = ErrorType<AdministradorSedeResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarAdministradorSede>>, TError,{id: number;data: BodyType<ActualizarAdminSedeRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof actualizarAdministradorSede>>, TError,{id: number;data: BodyType<ActualizarAdminSedeRequest>}, TContext> => {
+
+const mutationKey = ['actualizarAdministradorSede'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof actualizarAdministradorSede>>, {id: number;data: BodyType<ActualizarAdminSedeRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  actualizarAdministradorSede(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActualizarAdministradorSedeMutationResult = NonNullable<Awaited<ReturnType<typeof actualizarAdministradorSede>>>
+    export type ActualizarAdministradorSedeMutationBody = BodyType<ActualizarAdminSedeRequest>
+    export type ActualizarAdministradorSedeMutationError = ErrorType<AdministradorSedeResponse>
+
+    /**
+ * @summary Modificar Administrador de Sede
+ */
+export const useActualizarAdministradorSede = <TError = ErrorType<AdministradorSedeResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actualizarAdministradorSede>>, TError,{id: number;data: BodyType<ActualizarAdminSedeRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof actualizarAdministradorSede>>,
+        TError,
+        {id: number;data: BodyType<ActualizarAdminSedeRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getActualizarAdministradorSedeMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Permite al Administrador General dar de baja un Administrador de Sede desvinculando sus sedes.
+ * @summary Eliminar Administrador de Sede
+ */
+export const eliminarAdministradorSede = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/admin/usuarios/administradores-sede/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getEliminarAdministradorSedeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eliminarAdministradorSede>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof eliminarAdministradorSede>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['eliminarAdministradorSede'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eliminarAdministradorSede>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  eliminarAdministradorSede(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EliminarAdministradorSedeMutationResult = NonNullable<Awaited<ReturnType<typeof eliminarAdministradorSede>>>
+    
+    export type EliminarAdministradorSedeMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar Administrador de Sede
+ */
+export const useEliminarAdministradorSede = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eliminarAdministradorSede>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eliminarAdministradorSede>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getEliminarAdministradorSedeMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Permite probar y simular la detección inteligente en un partido en curso generando el evento de gol y el correspondiente clip de video.
+ * @summary Simular detección de gol por YOLO directamente en un partido en juego
+ */
+export const procesarDeteccionPartido = (
+    partidoId: number,
+    deteccionYoloRequest: BodyType<DeteccionYoloRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<EventoResponse>(
+      {url: `/api/sensores/yolo/partidos/${partidoId}/deteccion`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: deteccionYoloRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getProcesarDeteccionPartidoMutationOptions = <TError = ErrorType<EventoResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof procesarDeteccionPartido>>, TError,{partidoId: number;data: BodyType<DeteccionYoloRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof procesarDeteccionPartido>>, TError,{partidoId: number;data: BodyType<DeteccionYoloRequest>}, TContext> => {
+
+const mutationKey = ['procesarDeteccionPartido'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof procesarDeteccionPartido>>, {partidoId: number;data: BodyType<DeteccionYoloRequest>}> = (props) => {
+          const {partidoId,data} = props ?? {};
+
+          return  procesarDeteccionPartido(partidoId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProcesarDeteccionPartidoMutationResult = NonNullable<Awaited<ReturnType<typeof procesarDeteccionPartido>>>
+    export type ProcesarDeteccionPartidoMutationBody = BodyType<DeteccionYoloRequest>
+    export type ProcesarDeteccionPartidoMutationError = ErrorType<EventoResponse>
+
+    /**
+ * @summary Simular detección de gol por YOLO directamente en un partido en juego
+ */
+export const useProcesarDeteccionPartido = <TError = ErrorType<EventoResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof procesarDeteccionPartido>>, TError,{partidoId: number;data: BodyType<DeteccionYoloRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof procesarDeteccionPartido>>,
+        TError,
+        {partidoId: number;data: BodyType<DeteccionYoloRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getProcesarDeteccionPartidoMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Recibe el resultado de inferencia del modelo YOLO (o una simulación), valida que el partido esté EN_JUEGO, registra el Gol como PENDIENTE_ATRIBUCION (origen YOLO) y dispara la creación asíncrona del Clip.
+ * @summary Ingestar o simular detección de gol mediante YOLO desde una cámara de cancha
+ */
+export const procesarDeteccionCamara = (
+    camaraId: number,
+    deteccionYoloRequest: BodyType<DeteccionYoloRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<EventoResponse>(
+      {url: `/api/sensores/yolo/camaras/${camaraId}/deteccion`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: deteccionYoloRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getProcesarDeteccionCamaraMutationOptions = <TError = ErrorType<EventoResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof procesarDeteccionCamara>>, TError,{camaraId: number;data: BodyType<DeteccionYoloRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof procesarDeteccionCamara>>, TError,{camaraId: number;data: BodyType<DeteccionYoloRequest>}, TContext> => {
+
+const mutationKey = ['procesarDeteccionCamara'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof procesarDeteccionCamara>>, {camaraId: number;data: BodyType<DeteccionYoloRequest>}> = (props) => {
+          const {camaraId,data} = props ?? {};
+
+          return  procesarDeteccionCamara(camaraId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProcesarDeteccionCamaraMutationResult = NonNullable<Awaited<ReturnType<typeof procesarDeteccionCamara>>>
+    export type ProcesarDeteccionCamaraMutationBody = BodyType<DeteccionYoloRequest>
+    export type ProcesarDeteccionCamaraMutationError = ErrorType<EventoResponse>
+
+    /**
+ * @summary Ingestar o simular detección de gol mediante YOLO desde una cámara de cancha
+ */
+export const useProcesarDeteccionCamara = <TError = ErrorType<EventoResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof procesarDeteccionCamara>>, TError,{camaraId: number;data: BodyType<DeteccionYoloRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof procesarDeteccionCamara>>,
+        TError,
+        {camaraId: number;data: BodyType<DeteccionYoloRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getProcesarDeteccionCamaraMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
  * Actualiza la marca temporal de ultimo latido del dispositivo para monitorear su estado en linea. Requiere codigoSensor y claveApi.
  * @summary Registrar latido de vida de un dispositivo
  */
@@ -1815,6 +2085,137 @@ export const useAgregarParticipante = <TError = ErrorType<PartidoResponse>,
     }
     
 /**
+ * Invalida el enlace y token actual y genera uno nuevo.
+ * @summary Revocar y regenerar token de invitación del partido
+ */
+export const revocarToken = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PartidoResponse>(
+      {url: `/api/partidos/${id}/invitacion/revocar`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getRevocarTokenMutationOptions = <TError = ErrorType<PartidoResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revocarToken>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof revocarToken>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['revocarToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revocarToken>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  revocarToken(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevocarTokenMutationResult = NonNullable<Awaited<ReturnType<typeof revocarToken>>>
+    
+    export type RevocarTokenMutationError = ErrorType<PartidoResponse>
+
+    /**
+ * @summary Revocar y regenerar token de invitación del partido
+ */
+export const useRevocarToken = <TError = ErrorType<PartidoResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revocarToken>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revocarToken>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getRevocarTokenMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Permite a un jugador autenticado o a un invitado (con nombre y apellido) unirse a un equipo del partido, validando límites de capacidad y previniendo registros duplicados.
+ * @summary Unirse al partido mediante enlace de invitación
+ */
+export const unirse = (
+    token: string,
+    unirsePartidoRequest: BodyType<UnirsePartidoRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ParticipanteResponse>(
+      {url: `/api/invitaciones/${token}/unirse`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: unirsePartidoRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getUnirseMutationOptions = <TError = ErrorType<ParticipanteResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unirse>>, TError,{token: string;data: BodyType<UnirsePartidoRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof unirse>>, TError,{token: string;data: BodyType<UnirsePartidoRequest>}, TContext> => {
+
+const mutationKey = ['unirse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unirse>>, {token: string;data: BodyType<UnirsePartidoRequest>}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  unirse(token,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnirseMutationResult = NonNullable<Awaited<ReturnType<typeof unirse>>>
+    export type UnirseMutationBody = BodyType<UnirsePartidoRequest>
+    export type UnirseMutationError = ErrorType<ParticipanteResponse>
+
+    /**
+ * @summary Unirse al partido mediante enlace de invitación
+ */
+export const useUnirse = <TError = ErrorType<ParticipanteResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unirse>>, TError,{token: string;data: BodyType<UnirsePartidoRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof unirse>>,
+        TError,
+        {token: string;data: BodyType<UnirsePartidoRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getUnirseMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
  * Permite a un jugador registrado vincular a su cuenta las estadisticas y participaciones previas acumuladas como invitado.
  * @summary Reclamar el perfil de un invitado
  */
@@ -2432,6 +2833,166 @@ export const useLogin = <TError = ErrorType<AuthResponse>,
       > => {
 
       const mutationOptions = getLoginMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Obtiene la lista de todos los usuarios con rol Administrador de Sede y sus sedes asociadas.
+ * @summary Listar administradores de sede
+ */
+export const listarAdministradoresSede = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdministradorSedeResponse[]>(
+      {url: `/api/admin/usuarios/administradores-sede`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListarAdministradoresSedeQueryKey = () => {
+    return [
+    `/api/admin/usuarios/administradores-sede`
+    ] as const;
+    }
+
+    
+export const getListarAdministradoresSedeQueryOptions = <TData = Awaited<ReturnType<typeof listarAdministradoresSede>>, TError = ErrorType<AdministradorSedeResponse[]>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarAdministradoresSede>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListarAdministradoresSedeQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listarAdministradoresSede>>> = ({ signal }) => listarAdministradoresSede(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listarAdministradoresSede>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type ListarAdministradoresSedeQueryResult = NonNullable<Awaited<ReturnType<typeof listarAdministradoresSede>>>
+export type ListarAdministradoresSedeQueryError = ErrorType<AdministradorSedeResponse[]>
+
+
+export function useListarAdministradoresSede<TData = Awaited<ReturnType<typeof listarAdministradoresSede>>, TError = ErrorType<AdministradorSedeResponse[]>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarAdministradoresSede>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarAdministradoresSede>>,
+          TError,
+          Awaited<ReturnType<typeof listarAdministradoresSede>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListarAdministradoresSede<TData = Awaited<ReturnType<typeof listarAdministradoresSede>>, TError = ErrorType<AdministradorSedeResponse[]>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarAdministradoresSede>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listarAdministradoresSede>>,
+          TError,
+          Awaited<ReturnType<typeof listarAdministradoresSede>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListarAdministradoresSede<TData = Awaited<ReturnType<typeof listarAdministradoresSede>>, TError = ErrorType<AdministradorSedeResponse[]>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarAdministradoresSede>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Listar administradores de sede
+ */
+
+export function useListarAdministradoresSede<TData = Awaited<ReturnType<typeof listarAdministradoresSede>>, TError = ErrorType<AdministradorSedeResponse[]>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listarAdministradoresSede>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getListarAdministradoresSedeQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * Permite al Administrador General registrar un nuevo usuario con rol de Administrador de Sede.
+ * @summary Crear nuevo Administrador de Sede
+ */
+export const crearAdministradorSede = (
+    crearAdminSedeRequest: BodyType<CrearAdminSedeRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdministradorSedeResponse>(
+      {url: `/api/admin/usuarios/administradores-sede`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: crearAdminSedeRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCrearAdministradorSedeMutationOptions = <TError = ErrorType<AdministradorSedeResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearAdministradorSede>>, TError,{data: BodyType<CrearAdminSedeRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof crearAdministradorSede>>, TError,{data: BodyType<CrearAdminSedeRequest>}, TContext> => {
+
+const mutationKey = ['crearAdministradorSede'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof crearAdministradorSede>>, {data: BodyType<CrearAdminSedeRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  crearAdministradorSede(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CrearAdministradorSedeMutationResult = NonNullable<Awaited<ReturnType<typeof crearAdministradorSede>>>
+    export type CrearAdministradorSedeMutationBody = BodyType<CrearAdminSedeRequest>
+    export type CrearAdministradorSedeMutationError = ErrorType<AdministradorSedeResponse>
+
+    /**
+ * @summary Crear nuevo Administrador de Sede
+ */
+export const useCrearAdministradorSede = <TError = ErrorType<AdministradorSedeResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof crearAdministradorSede>>, TError,{data: BodyType<CrearAdminSedeRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof crearAdministradorSede>>,
+        TError,
+        {data: BodyType<CrearAdminSedeRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCrearAdministradorSedeMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -3569,6 +4130,107 @@ export function useObtenerResumen<TData = Awaited<ReturnType<typeof obtenerResum
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getObtenerResumenQueryOptions(token,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * Entrega al organizador del partido el enlace de reclamo para compartirlo con el invitado no registrado.
+ * @summary Obtener enlace de reclamo de un invitado
+ */
+export const obtenerEnlaceReclamo = (
+    partidoId: number,
+    participanteId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ObtenerEnlaceReclamo200>(
+      {url: `/api/invitaciones/partidos/${partidoId}/participantes/${participanteId}/enlace-reclamo`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getObtenerEnlaceReclamoQueryKey = (partidoId?: number,
+    participanteId?: number,) => {
+    return [
+    `/api/invitaciones/partidos/${partidoId}/participantes/${participanteId}/enlace-reclamo`
+    ] as const;
+    }
+
+    
+export const getObtenerEnlaceReclamoQueryOptions = <TData = Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError = ErrorType<unknown>>(partidoId: number,
+    participanteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getObtenerEnlaceReclamoQueryKey(partidoId,participanteId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>> = ({ signal }) => obtenerEnlaceReclamo(partidoId,participanteId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(partidoId && participanteId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type ObtenerEnlaceReclamoQueryResult = NonNullable<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>>
+export type ObtenerEnlaceReclamoQueryError = ErrorType<unknown>
+
+
+export function useObtenerEnlaceReclamo<TData = Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError = ErrorType<unknown>>(
+ partidoId: number,
+    participanteId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerEnlaceReclamo>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerEnlaceReclamo>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useObtenerEnlaceReclamo<TData = Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError = ErrorType<unknown>>(
+ partidoId: number,
+    participanteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obtenerEnlaceReclamo>>,
+          TError,
+          Awaited<ReturnType<typeof obtenerEnlaceReclamo>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useObtenerEnlaceReclamo<TData = Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError = ErrorType<unknown>>(
+ partidoId: number,
+    participanteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Obtener enlace de reclamo de un invitado
+ */
+
+export function useObtenerEnlaceReclamo<TData = Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError = ErrorType<unknown>>(
+ partidoId: number,
+    participanteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof obtenerEnlaceReclamo>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getObtenerEnlaceReclamoQueryOptions(partidoId,participanteId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 

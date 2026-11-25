@@ -1,15 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useObtenerPorId5, useDisponibilidad } from '@/api/endpoints';
-import type { ReservaResponse } from '@/api/model/reservaResponse';
 import {
   formatearHora,
   formatearPrecio,
   generarTurnosHorarios,
   type TurnoSlot,
 } from './utils/tarifa';
-import { ReservarModal } from '@/features/reservas/components/ReservarModal';
-import { PagoModal } from '@/features/reservas/components/PagoModal';
+import { ReservaPasosModal } from '@/features/reservas/components/ReservaPasosModal';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -53,7 +51,6 @@ export const CanchaDetallePage: React.FC = () => {
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>(getFechaHoyISO());
   const [slotParaReservar, setSlotParaReservar] = useState<TurnoSlot | null>(null);
-  const [reservaParaPagar, setReservaParaPagar] = useState<ReservaResponse | null>(null);
 
   // Consulta de datos de la cancha
   const {
@@ -534,38 +531,17 @@ export const CanchaDetallePage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal de Reserva */}
+      {/* Modal de Reserva por Pasos */}
       {slotParaReservar && (
-        <ReservarModal
+        <ReservaPasosModal
           cancha={cancha}
           fecha={fechaSeleccionada}
           horaInicio={slotParaReservar.inicio}
           horaFin={slotParaReservar.fin}
           precioEstimado={slotParaReservar.precio}
+          isOpen={!!slotParaReservar}
           onClose={() => setSlotParaReservar(null)}
-          onSuccess={() => {
-            // Refrescar disponibilidad de inmediato tras reservar con éxito
-            refetchDisponibilidad();
-          }}
-          onRefreshDisponibilidad={() => {
-            refetchDisponibilidad();
-          }}
-          onAbrirPago={(reserva) => {
-            setSlotParaReservar(null);
-            setReservaParaPagar(reserva);
-          }}
-        />
-      )}
-
-      {/* Modal de Pago */}
-      {reservaParaPagar && (
-        <PagoModal
-          reserva={reservaParaPagar}
-          onClose={() => setReservaParaPagar(null)}
-          onSuccess={() => {
-            setReservaParaPagar(null);
-            refetchDisponibilidad();
-          }}
+          onRefreshDisponibilidad={() => refetchDisponibilidad()}
         />
       )}
     </div>

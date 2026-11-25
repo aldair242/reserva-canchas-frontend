@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './actualizarAdminSedeRequest';
+export * from './administradorSedeResponse';
 export * from './atribuirRequest';
 export * from './authResponse';
 export * from './bloqueoCanchaRequest';
@@ -28,6 +30,9 @@ export * from './clipDetalleResponseEstado';
 export * from './clipResponse';
 export * from './clipResponseEstado';
 export * from './crear2Params';
+export * from './crearAdminSedeRequest';
+export * from './deteccionYoloRequest';
+export * from './deteccionYoloRequestEquipo';
 export * from './disponibilidadParams';
 export * from './disponibilidadResponse';
 export * from './dispositivoRegistroResponse';
@@ -53,6 +58,7 @@ export * from './listarReservasPorSedeParams';
 export * from './listarTodas1Deporte';
 export * from './listarTodas1Params';
 export * from './loginRequest';
+export * from './obtenerEnlaceReclamo200';
 export * from './obtenerEstadisticasParams';
 export * from './pagoRequest';
 export * from './pagoRequestTipoPago';
@@ -76,4 +82,6 @@ export * from './sedeRequest';
 export * from './sedeResponse';
 export * from './servirArchivoParams';
 export * from './turnoDisponible';
+export * from './unirsePartidoRequest';
+export * from './unirsePartidoRequestEquipo';
 export * from './usuarioAuthResponse';

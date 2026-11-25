@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { InvitacionResponseEstado } from './invitacionResponseEstado';
+import type { ParticipanteResponse } from './participanteResponse';
 
 /**
  * Detalle público de un partido para resolver invitación
@@ -33,4 +34,6 @@ export interface InvitacionResponse {
   canchaNombre?: string;
   /** Nombre de la sede */
   sedeNombre?: string;
+  /** Participantes actualmente inscritos en el partido */
+  participantes?: ParticipanteResponse[];
 }

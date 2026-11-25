@@ -1,108 +1,84 @@
-# Reserva de Canchas - Frontend
+# CanchaYa - Frontend Oficial (Versión Final de Entrega Académica)
 
-Frontend moderno y reactivo para la plataforma **Reserva de Canchas Deportivas**, construido con React 18, Vite, TypeScript y Tailwind CSS, consumiendo la API REST de Spring Boot (`http://localhost:8080`).
+Plataforma profesional de reserva de canchas deportivas conectada con backend Spring Boot (`http://localhost:8080`), gestión de partidos en tiempo real, integración con sensores de arco IoT y simulación de visión artificial (YOLO).
 
----
-
-## 🛠️ Stack Tecnológico
-
-- **React 18** + **Vite** + **TypeScript**
-- **Tailwind CSS** para estilos responsive y mobile-first
-- **React Router v6** para enrutamiento y protección por roles
-- **TanStack Query (React Query v5)** para gestión del estado del servidor y caché
-- **react-hook-form** + **zod** para formularios tipados y validados
-- **Orval** para generación automática del cliente de API y hooks desde OpenAPI
-- **Vitest** + **Testing Library** (`@testing-library/react`, `jest-dom`, `user-event`) para pruebas unitarias y de integración
+Desarrollado con **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, **TanStack Query v5**, **React Hook Form**, **Zod**, **Orval** y **Vitest**.
 
 ---
 
-## 📂 Estructura del Proyecto
+## ⚽ Identidad y Sistema de Diseño CanchaYa
 
-```
-ReservaCanchas-Frontend/
-├── docs/
-│   ├── FRONTEND.md             # Especificación y reglas del frontend
-│   ├── openapi.json            # Contrato OpenAPI real sincronizado
-│   └── prompts_frontend.md     # Guía de fases y prompts de desarrollo
-├── src/
-│   ├── api/                    # Cliente generado por Orval (NO editar a mano)
-│   │   ├── endpoints.ts        # Funciones y hooks React Query
-│   │   └── model/              # DTOs y tipos generados
-│   ├── components/             # Componentes compartidos
-│   │   ├── common/             # LoadingSpinner, ErrorMessage, EmptyState
-│   │   └── layout/             # Navbar responsive y AppLayout
-│   ├── features/               # Módulos por dominio
-│   │   ├── auth/               # Contexto, LoginPage, RegistroPage
-│   │   ├── sedes/              # (Fase F1 / F4)
-│   │   ├── canchas/            # (Fase F1 / F4)
-│   │   ├── reservas/           # (Fase F1 / F4)
-│   │   ├── partidos/           # (Fase F2)
-│   │   ├── clips/              # (Fase F3)
-│   │   ├── estadisticas/       # (Fase F3)
-│   │   └── admin/              # (Fase F4)
-│   ├── lib/                    # Utilidades y configuración
-│   │   ├── api-client.ts       # Instancia Axios con interceptores JWT y 401
-│   │   └── error-utils.ts      # Extractor de errores HTTP y mensajes de API
-│   ├── pages/                  # Vistas principales (Home, 404, 403)
-│   ├── routes/                 # ProtectedRoute y AppRoutes
-│   ├── types/                  # Tipos globales de la app (roles, auth)
-│   ├── App.tsx                 # Proveedores globales
-│   ├── main.tsx                # Entrada React 18
-│   └── index.css               # Directivas de Tailwind CSS
-├── orval.config.ts             # Configuración del generador Orval
-├── vite.config.ts              # Configuración de Vite y Vitest
-└── package.json
-```
+- **Estilo**: Deportivo, moderno, sobrio y de alto contraste visual.
+- **Paleta de Colores**:
+  - `turf` (Verde césped principal): `#16a34a` / `#15803d`
+  - `navy` (Azul noche profundo): `#020617` / `#0b1120` / `#0f172a`
+  - `limeAccent` (Lima enérgico): `#84cc16` / `#a3e635` — exclusivo para CTAs estelares y el distintivo **SIMULADO** de YOLO.
+  - Colores semánticos de estado: Verde (confirmado/éxito), Ámbar (pendiente/advertencia) y Rojo (cancelado/error), acompañados siempre de texto descriptivo.
+- **Tipografías**: Google Fonts **Plus Jakarta Sans** (títulos y display deportivo) e **Inter** (cuerpo de texto e interfaz).
+- **Iconografía**: **100% libre de emojis** en toda la interfaz de usuario; uso exclusivo de iconos sobrios de `lucide-react`.
 
 ---
 
-## ⚙️ Variables de Entorno
+## 🚀 Arquitectura y Módulos Implementados
 
-Copia el archivo `.env.example` a `.env`:
+### 1. Páginas Públicas
+- **Portada (`HomePage.tsx`)**: Hero deportivo con buscador integrado por deporte y sede, flujo en 3 pasos, catálogo de canchas destacadas, sección de tecnología IoT/visión artificial y pie de página en 4 columnas.
+- **Catálogo de Canchas (`CanchasPage.tsx` y `CanchaCard.tsx`)**: Filtros reactivos por deporte, sede, techado e iluminación nocturna, tarjetas técnicas con tarifas en Soles (`S/.`).
+- **Detalle de Cancha (`CanchaDetallePage.tsx`)**: Información completa, horarios diurnos/nocturnos, selector de turnos y modal de reserva por pasos.
+- **Login y Registro en 2 Columnas (`LoginPage.tsx`, `RegistroPage.tsx`)**: Validación con Zod, alternancia de visibilidad de contraseña (mostrar/ocultar) y panel lateral informativo.
+- **Invitación a Partido (`InvitacionDetallePage.tsx`)**: Convocatoria oficial, alineaciones, unión para jugadores autenticados o invitados con nombre/apellido (`POST /api/invitaciones/{token}/unirse`) y reclamo de perfil (`POST /api/invitaciones/{token}/reclamar`).
+
+### 2. Experiencia del Jugador (`JUGADOR`)
+- **Dashboard del Jugador (`DashboardJugadorPage.tsx`)**: Próxima reserva destacada, panel de pagos pendientes con modal de pago simulado instantáneo, historial de partidos recientes y estadísticas clave.
+- **Reserva en 4 Pasos (`ReservaPasosModal.tsx`)**:
+  1. Horario seleccionado y comprobación de sesión.
+  2. Resumen y condiciones de cancelación (regla de las 2 horas).
+  3. Pago simulado (Yape/Plin, Tarjetas, Transferencia o Efectivo) con generación de reserva en estado pagado.
+  4. Confirmación con código de reserva y creación directa de partido.
+- **Mis Reservas (`MisReservasPage.tsx`)**: Pestañas de filtrado (Todas, Pendientes, Confirmadas, Historial), modal de pago simulado (`ModalPago.tsx`), reprogramación (`ReprogramarModal.tsx`) y cancelación (`CancelarModal.tsx`).
+- **Detalle de Partido (`PartidoDetallePage.tsx`)**: Marcador digital, alineaciones A y B, cronología de eventos con atribución y confirmación de goles, reproductor y reintento de clips de video, código QR SVG y revocación de token.
+- **Perfil del Jugador (`PerfilPage.tsx`)**: Ficha deportiva oficial, filtros por sede y rango de fechas, métricas de partidos, goles, asistencias, promedio de gol por partido, victorias y porcentaje de efectividad.
+- **Rankings Deportivos (`RankingsPage.tsx`)**: Podio olímpico Top 3 sin emojis (Oro con Corona, Plata y Bronce), tabla general de posiciones por Goles, Asistencias o Victorias con filtros por sede y fechas.
+
+### 3. Módulo de Administración (`ADMIN` y `ADMIN_SEDE`)
+- **Gestión de Sedes y Canchas (`AdminSedesPage.tsx`, `AdminCanchasPage.tsx`, `AdminReservasPage.tsx`)**: Administración de complejos, tarifas y bloqueos por mantenimiento.
+- **Administradores de Sede (`AdminUsuariosPage.tsx`)**: CRUD completo conectado a los endpoints generados por Orval (`useListarAdministradoresSede`, `useCrearAdministradorSede`, etc.).
+- **Dispositivos IoT y Cámaras (`AdminDispositivosPage.tsx`)**: Registro de sensores de arco (`useRegistrarSensor`) y cámaras RTSP (`useRegistrarCamara`), modal de seguridad para copia única de `claveApi`, telemetría de latidos online e inhabilitación (`useDesactivar`).
+- **Simulador YOLO de Visión Artificial (`DemoYoloPage.tsx`)**: Protegido por rol, utiliza el JWT de administrador (sin pedir claveApi en navegador), dispara detecciones (`POST /api/sensores/yolo/partidos/{id}/deteccion`), actualiza el marcador en vivo cada 4s y exhibe la insignia obligatoria de **MÓDULO SIMULADO**.
+
+---
+
+## 🛠️ Comandos de Ejecución
 
 ```bash
-cp .env.example .env
-```
-
-| Variable | Valor por defecto | Descripción |
-|---|---|---|
-| `VITE_API_URL` | `http://localhost:8080` | URL base del servidor backend Spring Boot |
-
----
-
-## 🚀 Comandos de Ejecución
-
-### 1. Instalar dependencias
-```bash
+# 1. Instalar dependencias
 npm install
-```
 
-### 2. Iniciar servidor de desarrollo (puerto 5173)
-```bash
+# 2. Iniciar servidor de desarrollo (puerto 5173)
 npm run dev
-```
 
-### 3. Ejecutar pruebas unitarias
-```bash
+# 3. Ejecutar pruebas unitarias (Vitest)
 npm test
-```
 
-### 4. Compilar para producción
-```bash
+# 4. Compilar para producción (TypeScript + Vite)
 npm run build
-```
 
-### 5. Regenerar cliente de la API desde OpenAPI
-```bash
+# 5. Regenerar cliente API desde OpenAPI oficial
 npm run api:generar
 ```
-*Nota: Este comando lee `docs/openapi.json` o puede apuntar a `http://localhost:8080/v3/api-docs` y genera automáticamente los endpoints y modelos en `src/api/`.*
 
 ---
 
-## 🔐 Seguridad y Autenticación
+## 🧪 Pruebas y Aseguramiento de Calidad
 
-- **Autenticación JWT**: Al iniciar sesión (`POST /api/auth/login`) o registrarse (`POST /api/auth/registro`), el token y el perfil de usuario se guardan en `localStorage` y en el contexto `AuthContext`.
-- **Interceptor Bearer**: Cada petición HTTP a través de `api-client.ts` adjunta la cabecera `Authorization: Bearer <token>`.
-- **Manejo de 401**: Ante una respuesta 401 de la API, el interceptor limpia las credenciales y dispara un evento global `auth:unauthorized` que redirige al usuario a `/login`.
-- **Control de Roles**: Los roles contemplados en el sistema son `JUGADOR`, `ADMIN_SEDE` y `ADMIN`. La barra de navegación y las rutas se adaptan visualmente según el rol, delegando la autorización estricta en el backend.
+- **Vitest**: 27/27 pruebas unitarias aprobadas al 100%.
+- **TypeScript**: 0 errores de compilación (`tsc -b` limpio).
+- **Zona Horaria y Moneda**: Horarios interpretados en hora peruana (`America/Lima`) y precios en Soles peruanos (`S/.`).
+- **Manejo de Errores**: Códigos HTTP 400, 401, 403, 404 y 409 con mensajes amigables y prevención de envíos dobles.
+
+---
+
+## 📄 Documentación Adicional
+- [docs/GUION_SUSTENTACION.md](file:///c:/Users/jerem/OneDrive/Desktop/Desarrollo%20Web/reserva-canchas-frontend-main/docs/GUION_SUSTENTACION.md): Guión paso a paso para la defensa y sustentación académica del proyecto.
+- [AVANCE.md](file:///c:/Users/jerem/OneDrive/Desktop/Desarrollo%20Web/reserva-canchas-frontend-main/AVANCE.md): Registro histórico de fases y decisiones técnicas.
+- [PENDIENTES_BACKEND.md](file:///c:/Users/jerem/OneDrive/Desktop/Desarrollo%20Web/reserva-canchas-frontend-main/PENDIENTES_BACKEND.md): Detalle de campos y comportamientos del backend documentados según contrato.

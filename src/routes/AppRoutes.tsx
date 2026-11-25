@@ -17,8 +17,12 @@ import { AdminCanchasPage } from '@/features/canchas/AdminCanchasPage';
 import { AdminReservasPage } from '@/features/reservas/AdminReservasPage';
 import { AdminGlobalPage } from '@/features/admin/AdminGlobalPage';
 import { AdminUsuariosPage } from '@/features/admin/AdminUsuariosPage';
+import { AdminDispositivosPage } from '@/features/admin/AdminDispositivosPage';
+import { DemoYoloPage } from '@/features/admin/DemoYoloPage';
 import { MisPartidosPage } from '@/features/partidos/MisPartidosPage';
+import { PartidoDetallePage } from '@/features/partidos/PartidoDetallePage';
 import { InvitacionDetallePage } from '@/features/partidos/InvitacionDetallePage';
+import { DashboardJugadorPage } from '@/features/dashboard/DashboardJugadorPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
@@ -47,6 +51,14 @@ export const AppRoutes: React.FC = () => {
 
         {/* Rutas protegidas para JUGADOR */}
         <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute rolesPermitidos={['JUGADOR']}>
+              <DashboardJugadorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/mis-reservas"
           element={
             <ProtectedRoute rolesPermitidos={['JUGADOR']}>
@@ -62,14 +74,8 @@ export const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/partidos/:id"
-          element={
-            <ProtectedRoute rolesPermitidos={['JUGADOR']}>
-              <MisPartidosPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Detalle oficial de partido accesible */}
+        <Route path="/partidos/:id" element={<PartidoDetallePage />} />
         <Route
           path="/perfil"
           element={
@@ -101,6 +107,22 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute rolesPermitidos={['ADMIN_SEDE', 'ADMIN']}>
               <AdminReservasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dispositivos"
+          element={
+            <ProtectedRoute rolesPermitidos={['ADMIN_SEDE', 'ADMIN']}>
+              <AdminDispositivosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/yolo"
+          element={
+            <ProtectedRoute rolesPermitidos={['ADMIN_SEDE', 'ADMIN']}>
+              <DemoYoloPage />
             </ProtectedRoute>
           }
         />

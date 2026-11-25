@@ -19,4 +19,6 @@ export interface ParticipanteRequest {
   apellidoInvitado?: string;
   /** Equipo asignado */
   equipo: ParticipanteRequestEquipo;
+  /** Token de invitación requerido para unirse al partido */
+  tokenInvitacion?: string;
 }

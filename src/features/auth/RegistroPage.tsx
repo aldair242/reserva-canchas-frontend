@@ -7,8 +7,16 @@ import { useAuth } from './AuthContext';
 import { useRegistrar1 } from '@/api/endpoints';
 import { getApiErrorMessage } from '@/lib/error-utils';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { Button } from '@/components/ui/Button';
 import type { UsuarioAutenticado, RolUsuario } from '@/types/auth';
-import { UserPlus, User, Mail, Lock, Phone, Trophy, Loader2 } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Trophy,
+  Activity,
+  CheckCircle2,
+} from 'lucide-react';
 
 const registroSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(100),
@@ -25,6 +33,8 @@ type RegistroFormData = z.infer<typeof registroSchema>;
 export const RegistroPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
 
   const {
@@ -66,7 +76,7 @@ export const RegistroPage: React.FC = () => {
         }
       },
       onError: (err) => {
-        setErrorMensaje(getApiErrorMessage(err, 'No fue posible completar el registro. Intenta con otro correo.'));
+        setErrorMensaje(getApiErrorMessage(err, 'No fue posible registrar tu cuenta. El correo ya podría estar en uso.'));
       },
     },
   });
@@ -75,227 +85,198 @@ export const RegistroPage: React.FC = () => {
     setErrorMensaje(null);
     registroMutation.mutate({
       data: {
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        correo: formData.correo,
+        nombre: formData.nombre.trim(),
+        apellido: formData.apellido.trim(),
+        correo: formData.correo.trim(),
         password: formData.password,
-        telefono: formData.telefono || undefined,
-        apodo: formData.apodo || undefined,
-        posicionPreferida: formData.posicionPreferida || undefined,
+        telefono: formData.telefono?.trim() || undefined,
+        apodo: formData.apodo?.trim() || undefined,
+        posicionPreferida: formData.posicionPreferida?.trim() || undefined,
       },
     });
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
-            <UserPlus className="w-6 h-6" />
+    <div className="min-h-[85vh] flex items-center justify-center py-8">
+      <div className="w-full max-w-4xl bg-white rounded-3xl border border-navy-200/80 shadow-card overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        {/* Columna 1: Branding y Beneficios Deportivos */}
+        <div className="relative bg-gradient-to-br from-navy-950 via-navy-900 to-turf-950 text-white p-8 sm:p-10 flex flex-col justify-between hidden md:flex">
+          <div className="space-y-4">
+            <BrandLogo isDark={true} />
+            <div className="pt-8 space-y-3">
+              <span className="text-[11px] font-bold text-limeAccent-400 uppercase tracking-widest block font-mono">
+                Únete a la Comunidad
+              </span>
+              <h2 className="font-display font-extrabold text-2xl sm:text-3xl tracking-tight leading-snug">
+                Crea tu perfil de jugador oficial.
+              </h2>
+              <p className="text-xs text-navy-200 leading-relaxed">
+                Guarda tus estadísticas de goles, asistencias y victorias, participa en partidos con amigos y accede a repeticiones en video.
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Crear Cuenta de Jugador</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Regístrate para reservar canchas y registrar tus estadísticas
-          </p>
+
+          <div className="space-y-3 pt-6 border-t border-navy-800 text-xs text-navy-300">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Aparece en la tabla de clasificación de goleadores</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-turf-400" />
+              <span>Atribución oficial de tus goles con sensores IoT</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-limeAccent-400" />
+              <span>Reclama tus partidos previos como invitado</span>
+            </div>
+          </div>
         </div>
 
-        {errorMensaje && (
+        {/* Columna 2: Formulario de Registro */}
+        <div className="p-8 sm:p-10 flex flex-col justify-center">
           <div className="mb-6">
-            <ErrorMessage mensaje={errorMensaje} />
+            <h1 className="font-display font-bold text-2xl text-navy-950 tracking-tight">
+              Crear Cuenta
+            </h1>
+            <p className="text-xs text-navy-500 mt-1">
+              Completa tus datos para registrarte como jugador.
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="nombre" className="block text-sm font-medium text-slate-700 mb-1">
-                Nombre
-              </label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4" />
-                </div>
+          {errorMensaje && (
+            <div className="mb-4">
+              <ErrorMessage mensaje={errorMensaje} />
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="nombre" className="block text-xs font-semibold text-navy-700">
+                  Nombre
+                </label>
                 <input
                   id="nombre"
                   type="text"
+                  placeholder="Ej. Lucas"
                   disabled={registroMutation.isPending}
-                  placeholder="Lionel"
-                  aria-invalid={errors.nombre ? 'true' : 'false'}
-                  aria-describedby={errors.nombre ? 'nombre-error' : undefined}
-                  className={`block w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                    errors.nombre ? 'border-red-300 bg-red-50' : 'border-slate-300'
+                  className={`w-full rounded-xl border text-sm py-2 px-3 bg-white text-navy-900 focus:outline-none focus:ring-1 ${
+                    errors.nombre ? 'border-rose-400' : 'border-navy-200 focus:border-turf-600'
                   }`}
                   {...register('nombre')}
                 />
+                {errors.nombre && <p className="text-[11px] text-rose-600">{errors.nombre.message}</p>}
               </div>
-              {errors.nombre && (
-                <p id="nombre-error" role="alert" className="mt-1 text-xs text-red-600">
-                  {errors.nombre.message}
-                </p>
-              )}
+
+              <div className="space-y-1">
+                <label htmlFor="apellido" className="block text-xs font-semibold text-navy-700">
+                  Apellido
+                </label>
+                <input
+                  id="apellido"
+                  type="text"
+                  placeholder="Ej. Silva"
+                  disabled={registroMutation.isPending}
+                  className={`w-full rounded-xl border text-sm py-2 px-3 bg-white text-navy-900 focus:outline-none focus:ring-1 ${
+                    errors.apellido ? 'border-rose-400' : 'border-navy-200 focus:border-turf-600'
+                  }`}
+                  {...register('apellido')}
+                />
+                {errors.apellido && <p className="text-[11px] text-rose-600">{errors.apellido.message}</p>}
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="apellido" className="block text-sm font-medium text-slate-700 mb-1">
-                Apellido
+            <div className="space-y-1">
+              <label htmlFor="correo" className="block text-xs font-semibold text-navy-700">
+                Correo electrónico
               </label>
               <input
-                id="apellido"
-                type="text"
-                disabled={registroMutation.isPending}
-                placeholder="Messi"
-                aria-invalid={errors.apellido ? 'true' : 'false'}
-                aria-describedby={errors.apellido ? 'apellido-error' : undefined}
-                className={`block w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                  errors.apellido ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                }`}
-                {...register('apellido')}
-              />
-              {errors.apellido && (
-                <p id="apellido-error" role="alert" className="mt-1 text-xs text-red-600">
-                  {errors.apellido.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="reg-correo" className="block text-sm font-medium text-slate-700 mb-1">
-              Correo electrónico
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Mail className="w-4 h-4" />
-              </div>
-              <input
-                id="reg-correo"
+                id="correo"
                 type="email"
-                disabled={registroMutation.isPending}
                 placeholder="jugador@ejemplo.com"
-                aria-invalid={errors.correo ? 'true' : 'false'}
-                aria-describedby={errors.correo ? 'correo-reg-error' : undefined}
-                className={`block w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                  errors.correo ? 'border-red-300 bg-red-50' : 'border-slate-300'
+                disabled={registroMutation.isPending}
+                className={`w-full rounded-xl border text-sm py-2 px-3 bg-white text-navy-900 focus:outline-none focus:ring-1 ${
+                  errors.correo ? 'border-rose-400' : 'border-navy-200 focus:border-turf-600'
                 }`}
                 {...register('correo')}
               />
+              {errors.correo && <p className="text-[11px] text-rose-600">{errors.correo.message}</p>}
             </div>
-            {errors.correo && (
-              <p id="correo-reg-error" role="alert" className="mt-1 text-xs text-red-600">
-                {errors.correo.message}
-              </p>
-            )}
-          </div>
 
-          <div>
-            <label htmlFor="reg-password" className="block text-sm font-medium text-slate-700 mb-1">
-              Contraseña
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4" />
-              </div>
-              <input
-                id="reg-password"
-                type="password"
-                disabled={registroMutation.isPending}
-                placeholder="Mínimo 6 caracteres"
-                aria-invalid={errors.password ? 'true' : 'false'}
-                aria-describedby={errors.password ? 'password-reg-error' : undefined}
-                className={`block w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                  errors.password ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                }`}
-                {...register('password')}
-              />
-            </div>
-            {errors.password && (
-              <p id="password-reg-error" role="alert" className="mt-1 text-xs text-red-600">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="telefono" className="block text-sm font-medium text-slate-700 mb-1">
-                Teléfono (opcional)
+            <div className="space-y-1">
+              <label htmlFor="password" className="block text-xs font-semibold text-navy-700">
+                Contraseña (mínimo 6 caracteres)
               </label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Phone className="w-4 h-4" />
-                </div>
+              <div className="relative">
                 <input
-                  id="telefono"
-                  type="tel"
+                  id="password"
+                  type={mostrarPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
                   disabled={registroMutation.isPending}
-                  placeholder="+51 987654321"
-                  className="block w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  {...register('telefono')}
+                  className={`w-full rounded-xl border text-sm py-2 pl-3 pr-9 bg-white text-navy-900 focus:outline-none focus:ring-1 ${
+                    errors.password ? 'border-rose-400' : 'border-navy-200 focus:border-turf-600'
+                  }`}
+                  {...register('password')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarPassword(!mostrarPassword)}
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-navy-400 hover:text-navy-700"
+                  aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                >
+                  {mostrarPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-[11px] text-rose-600">{errors.password.message}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="apodo" className="block text-xs font-semibold text-navy-700">
+                  Apodo / Alias (opcional)
+                </label>
+                <input
+                  id="apodo"
+                  type="text"
+                  placeholder="Ej. El Rayo"
+                  disabled={registroMutation.isPending}
+                  className="w-full rounded-xl border border-navy-200 text-sm py-2 px-3 bg-white text-navy-900 focus:border-turf-600 focus:outline-none focus:ring-1"
+                  {...register('apodo')}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="posicionPreferida" className="block text-xs font-semibold text-navy-700">
+                  Posición (opcional)
+                </label>
+                <input
+                  id="posicionPreferida"
+                  type="text"
+                  placeholder="Delantero, Medio..."
+                  disabled={registroMutation.isPending}
+                  className="w-full rounded-xl border border-navy-200 text-sm py-2 px-3 bg-white text-navy-900 focus:border-turf-600 focus:outline-none focus:ring-1"
+                  {...register('posicionPreferida')}
                 />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="apodo" className="block text-sm font-medium text-slate-700 mb-1">
-                Apodo deportivo (opcional)
-              </label>
-              <input
-                id="apodo"
-                type="text"
-                disabled={registroMutation.isPending}
-                placeholder="La Pulga"
-                className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                {...register('apodo')}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="posicion" className="block text-sm font-medium text-slate-700 mb-1">
-              Posición preferida (opcional)
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Trophy className="w-4 h-4" />
-              </div>
-              <select
-                id="posicion"
-                disabled={registroMutation.isPending}
-                className="block w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                {...register('posicionPreferida')}
-              >
-                <option value="">Selecciona una posición</option>
-                <option value="Delantero">Delantero</option>
-                <option value="Mediocampista">Mediocampista</option>
-                <option value="Defensa">Defensa</option>
-                <option value="Arquero">Arquero</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
+            <Button
               type="submit"
-              disabled={registroMutation.isPending}
-              className="w-full flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              variant="primary"
+              size="md"
+              className="w-full mt-2 font-bold"
+              isLoading={registroMutation.isPending}
             >
-              {registroMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Registrando cuenta...
-                </>
-              ) : (
-                'Crear cuenta'
-              )}
-            </button>
-          </div>
-        </form>
+              Completar Registro
+            </Button>
+          </form>
 
-        <div className="mt-6 text-center text-sm text-slate-600 border-t border-slate-100 pt-4">
-          ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="font-semibold text-emerald-600 hover:text-emerald-700 underline">
-            Inicia sesión aquí
-          </Link>
+          <div className="mt-5 text-center text-xs text-navy-500 border-t border-navy-100 pt-3">
+            ¿Ya tienes una cuenta registrada?{' '}
+            <Link to="/login" className="font-bold text-turf-700 hover:underline">
+              Iniciar Sesión
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useObtenerResumen, useAgregarParticipante } from '@/api/endpoints';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useObtenerResumen, useUnirse, useReclamar } from '@/api/endpoints';
 import { useAuth } from '@/features/auth/AuthContext';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { getApiErrorMessage } from '@/lib/error-utils';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   Calendar,
   Clock,
@@ -13,20 +17,26 @@ import {
   Trophy,
   CheckCircle2,
   LogIn,
-  UserPlus,
   ArrowRight,
   ShieldCheck,
   Activity,
+  UserCheck,
+  AlertCircle
 } from 'lucide-react';
 
 export const InvitacionDetallePage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { usuario, estaAutenticado } = useAuth();
 
   const [equipoSeleccionado, setEquipoSeleccionado] = useState<'A' | 'B'>('A');
+  const [nombreInvitado, setNombreInvitado] = useState('');
+  const [apellidoInvitado, setApellidoInvitado] = useState('');
   const [unidoExitosamente, setUnidoExitosamente] = useState(false);
-  const [errorUnirse, setErrorUnirse] = useState<string | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [modoReclamo, setModoReclamo] = useState(false);
+  const [reclamoExitoso, setReclamoExitoso] = useState(false);
 
   const {
     data: resumen,
@@ -36,47 +46,72 @@ export const InvitacionDetallePage: React.FC = () => {
     refetch,
   } = useObtenerResumen(token || '');
 
-  const agregarParticipanteMutation = useAgregarParticipante({
+  // Hook oficial OpenAPI: POST /api/invitaciones/{token}/unirse
+  const unirseMutation = useUnirse({
     mutation: {
       onSuccess: () => {
         setUnidoExitosamente(true);
-        setErrorUnirse(null);
+        setErrorAccion(null);
       },
       onError: (err) => {
-        setErrorUnirse(getApiErrorMessage(err, 'No se pudo unir al partido'));
+        setErrorAccion(getApiErrorMessage(err, 'No se pudo unir al partido con esta invitación'));
       },
     },
   });
 
-  const handleUnirse = () => {
-    if (!resumen?.partidoId || !usuario?.id) return;
-    setErrorUnirse(null);
-    agregarParticipanteMutation.mutate({
-      id: resumen.partidoId,
+  // Hook oficial OpenAPI: POST /api/invitaciones/{token}/reclamar
+  const reclamarMutation = useReclamar({
+    mutation: {
+      onSuccess: () => {
+        setReclamoExitoso(true);
+        setErrorAccion(null);
+      },
+      onError: (err) => {
+        setErrorAccion(getApiErrorMessage(err, 'No se pudo reclamar el perfil con este token'));
+      },
+    },
+  });
+
+  const handleUnirse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+    setErrorAccion(null);
+
+    unirseMutation.mutate({
+      token,
       data: {
-        jugadorId: usuario.id,
         equipo: equipoSeleccionado,
+        nombre: estaAutenticado ? undefined : nombreInvitado.trim() || undefined,
+        apellido: estaAutenticado ? undefined : apellidoInvitado.trim() || undefined,
       },
     });
   };
 
+  const handleReclamarPerfil = () => {
+    if (!token) return;
+    if (!estaAutenticado) {
+      // Redirigir a login preservando la ruta de reclamo
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+    setErrorAccion(null);
+    reclamarMutation.mutate({ token });
+  };
+
   if (isLoading) {
-    return <LoadingSpinner mensaje="Cargando invitación del partido..." className="py-20" />;
+    return <LoadingSpinner mensaje="Verificando invitación..." className="py-20" />;
   }
 
   if (isError || !resumen) {
     return (
-      <div className="max-w-xl mx-auto py-12 space-y-4">
+      <div className="max-w-xl mx-auto py-12 px-4 space-y-4">
         <ErrorMessage
-          mensaje={getApiErrorMessage(error, 'El enlace o token de invitación no es válido o ha expirado')}
+          mensaje={getApiErrorMessage(error, 'El enlace de invitación no es válido o ha expirado')}
           onReintentar={() => refetch()}
         />
-        <div className="text-center">
-          <Link
-            to="/"
-            className="text-sm font-semibold text-emerald-600 hover:text-emerald-800"
-          >
-            Volver a la página principal
+        <div className="text-center pt-2">
+          <Link to="/">
+            <Button variant="secondary" size="sm">Volver al Inicio</Button>
           </Link>
         </div>
       </div>
@@ -84,54 +119,67 @@ export const InvitacionDetallePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 py-4">
-      {/* Encabezado de Invitación */}
-      <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-emerald-50 text-xs font-semibold backdrop-blur-sm">
+    <div className="max-w-2xl mx-auto space-y-6 py-6 px-4">
+      {/* Banner de Invitación CanchaYa */}
+      <div className="bg-gradient-to-r from-navy-950 via-navy-900 to-navy-950 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-navy-800 text-center space-y-3 relative overflow-hidden">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-turf-500/20 text-turf-400 text-xs font-bold border border-turf-500/30">
           <Activity className="w-3.5 h-3.5" />
-          Invitación Oficial a Partido
+          Invitación Oficial CanchaYa
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          ¡Te han invitado a jugar un partido!
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+          ¡Te han convocado a la cancha!
         </h1>
-        <p className="text-sm sm:text-base text-emerald-100 max-w-lg mx-auto">
-          Revisa los detalles del encuentro deportivo a continuación y únete a uno de los equipos.
+        <p className="text-sm text-slate-300 max-w-lg mx-auto">
+          Revisa los detalles del encuentro y confirma tu posición en el equipo.
         </p>
       </div>
 
-      {/* Ficha del Partido */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+      {/* Ficha Principal del Partido */}
+      <Card className="p-6 space-y-4">
         {/* Enfrentamiento de Equipos */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-center space-y-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Partido Programado
-          </span>
-          <div className="flex items-center justify-center gap-4 text-lg sm:text-xl font-black text-slate-800">
-            <span className="text-emerald-700">{resumen.nombreEquipoA || 'Equipo A'}</span>
-            <span className="text-slate-400 text-sm font-bold">VS</span>
-            <span className="text-teal-700">{resumen.nombreEquipoB || 'Equipo B'}</span>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-center space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Encuentro Deportivo
+            </span>
+            <StatusBadge status={resumen.estado || 'PROGRAMADO'} />
           </div>
-          <div className="text-xs text-slate-500">
-            Estado: <strong className="text-slate-700">{resumen.estado}</strong>
+
+          <div className="flex items-center justify-center gap-4 py-2">
+            <div className="text-right flex-1">
+              <span className="text-lg sm:text-xl font-black text-navy-900 block truncate">
+                {resumen.nombreEquipoA || 'Equipo A'}
+              </span>
+              <span className="text-xs font-semibold text-turf-700">Lado A</span>
+            </div>
+            <span className="px-2.5 py-1 bg-navy-100 text-navy-800 rounded-md text-xs font-black tracking-widest">
+              VS
+            </span>
+            <div className="text-left flex-1">
+              <span className="text-lg sm:text-xl font-black text-navy-900 block truncate">
+                {resumen.nombreEquipoB || 'Equipo B'}
+              </span>
+              <span className="text-xs font-semibold text-turf-700">Lado B</span>
+            </div>
           </div>
         </div>
 
-        {/* Datos de Lugar y Horario */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600">
-          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50">
-            <MapPin className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+        {/* Datos de Cancha, Sede y Horario */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600 mt-4">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-100 bg-slate-50/60">
+            <MapPin className="w-5 h-5 text-turf-600 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-slate-800 block text-sm">
+              <span className="font-bold text-slate-900 block text-sm">
                 {resumen.canchaNombre || 'Cancha Deportiva'}
               </span>
-              <span className="text-slate-500">{resumen.sedeNombre || 'Sede'}</span>
+              <span className="text-slate-500">{resumen.sedeNombre || 'Sede Deportiva'}</span>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50">
-            <Calendar className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-100 bg-slate-50/60">
+            <Calendar className="w-5 h-5 text-turf-600 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-slate-800 block text-sm">
+              <span className="font-bold text-slate-900 block text-sm">
                 {resumen.fecha}
               </span>
               <span className="text-slate-500 flex items-center gap-1">
@@ -142,122 +190,223 @@ export const InvitacionDetallePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Grabación y Sensores IoT */}
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-900 flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+        {/* Sensores y Grabación */}
+        <div className="bg-turf-50/60 border border-turf-200/80 rounded-xl p-4 text-xs text-turf-950 flex items-start gap-3 mt-4">
+          <ShieldCheck className="w-5 h-5 text-turf-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
-            <span className="font-bold">Partido con Tecnología de Sensores y Grabación:</span>
-            <p className="text-emerald-800 leading-relaxed">
-              Tus goles y jugadas destacadas se detectan en tiempo real por sensores de arco y se recortan en video para que los revivas en tu perfil.
+            <span className="font-bold text-turf-900">Partido con Seguimiento IoT & Cámaras:</span>
+            <p className="text-turf-800 leading-relaxed">
+              Los goles y jugadas del partido se detectan automáticamente por sensores y quedan registrados en tu historial.
             </p>
           </div>
         </div>
 
-        {/* Acciones según si está autenticado o no */}
-        {estaAutenticado ? (
-          <div className="pt-2 border-t border-slate-100 space-y-4">
-            {unidoExitosamente ? (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm text-center space-y-2">
-                <div className="flex items-center justify-center gap-2 font-bold text-base">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  <span>¡Te has unido exitosamente al partido!</span>
-                </div>
-                <p className="text-xs text-emerald-700">
-                  Ya estás registrado en la alineación del {equipoSeleccionado === 'A' ? (resumen.nombreEquipoA || 'Equipo A') : (resumen.nombreEquipoB || 'Equipo B')}.
-                </p>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/mis-partidos')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition"
-                  >
-                    <span>Ir a Mis Partidos</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+        {/* Sección de Unión o Reclamo */}
+        <div className="pt-5 border-t border-slate-200 mt-6">
+          {unidoExitosamente ? (
+            <div className="p-5 rounded-xl bg-turf-50 border border-turf-300 text-turf-950 text-center space-y-3">
+              <div className="flex items-center justify-center gap-2 font-bold text-base text-turf-800">
+                <CheckCircle2 className="w-5 h-5 text-turf-600" />
+                <span>¡Te has unido exitosamente al partido!</span>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">
-                    Elige el equipo en el que vas a jugar:
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEquipoSeleccionado('A')}
-                      className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
-                        equipoSeleccionado === 'A'
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Users className="w-4 h-4 text-emerald-600" />
-                      <span>{resumen.nombreEquipoA || 'Equipo A'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEquipoSeleccionado('B')}
-                      className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
-                        equipoSeleccionado === 'B'
-                          ? 'border-teal-600 bg-teal-50 text-teal-900 ring-2 ring-teal-500'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Users className="w-4 h-4 text-teal-600" />
-                      <span>{resumen.nombreEquipoB || 'Equipo B'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {errorUnirse && (
-                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
-                    {errorUnirse}
-                  </div>
+              <p className="text-xs text-turf-700">
+                Tu participación ha sido confirmada en la alineación del{' '}
+                <strong>{equipoSeleccionado === 'A' ? (resumen.nombreEquipoA || 'Equipo A') : (resumen.nombreEquipoB || 'Equipo B')}</strong>.
+              </p>
+              <div className="pt-2 flex justify-center gap-3">
+                {resumen.partidoId && (
+                  <Link to={`/partidos/${resumen.partidoId}`}>
+                    <Button variant="primary" size="sm" icon={<ArrowRight className="w-4 h-4" />}>
+                      Ver Partido en Vivo
+                    </Button>
+                  </Link>
                 )}
-
+                <Link to="/canchas">
+                  <Button variant="secondary" size="sm">Explorar Canchas</Button>
+                </Link>
+              </div>
+            </div>
+          ) : reclamoExitoso ? (
+            <div className="p-5 rounded-xl bg-blue-50 border border-blue-300 text-blue-950 text-center space-y-3">
+              <div className="flex items-center justify-center gap-2 font-bold text-base text-blue-800">
+                <UserCheck className="w-5 h-5 text-blue-600" />
+                <span>¡Perfil vinculado exitosamente!</span>
+              </div>
+              <p className="text-xs text-blue-700">
+                Las estadísticas, goles y participaciones previas de este partido han quedado asociadas a tu cuenta.
+              </p>
+              <div className="pt-2 flex justify-center">
+                <Link to="/perfil">
+                  <Button variant="primary" size="sm">Ir a Mi Perfil</Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {/* Selector de Acción: Unirse o Reclamar Perfil */}
+              <div className="flex border-b border-slate-200 mb-5">
                 <button
                   type="button"
-                  disabled={agregarParticipanteMutation.isPending}
-                  onClick={handleUnirse}
-                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={() => setModoReclamo(false)}
+                  className={`pb-2.5 px-4 text-xs font-bold transition-colors border-b-2 ${
+                    !modoReclamo
+                      ? 'border-turf-600 text-turf-700'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
                 >
-                  <Trophy className="w-4 h-4" />
-                  <span>
-                    {agregarParticipanteMutation.isPending
-                      ? 'Confirmando participación...'
-                      : `Confirmar y Unirme al ${equipoSeleccionado === 'A' ? (resumen.nombreEquipoA || 'Equipo A') : (resumen.nombreEquipoB || 'Equipo B')}`}
-                  </span>
+                  Unirse al Partido
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModoReclamo(true)}
+                  className={`pb-2.5 px-4 text-xs font-bold transition-colors border-b-2 ${
+                    modoReclamo
+                      ? 'border-turf-600 text-turf-700'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Reclamar Perfil de Invitado
                 </button>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="pt-4 border-t border-slate-100 space-y-3 text-center">
-            <p className="text-xs text-slate-600 font-medium">
-              Inicia sesión o regístrate para unirte a este partido con tu perfil de jugador y sumar tus estadísticas al ranking.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                to="/login"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Iniciar Sesión</span>
-              </Link>
-              <Link
-                to="/registro"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Registrarme como Jugador</span>
-              </Link>
+
+              {errorAccion && (
+                <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorAccion}</span>
+                </div>
+              )}
+
+              {!modoReclamo ? (
+                <form onSubmit={handleUnirse} className="space-y-4">
+                  {/* Selección de Equipo */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 block">
+                      Selecciona tu equipo:
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEquipoSeleccionado('A')}
+                        className={`p-3.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+                          equipoSeleccionado === 'A'
+                            ? 'border-turf-600 bg-turf-50/70 text-turf-900 ring-2 ring-turf-500/50'
+                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Users className="w-4 h-4 text-turf-600" />
+                        <span className="truncate w-full text-center">
+                          {resumen.nombreEquipoA || 'Equipo A'}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEquipoSeleccionado('B')}
+                        className={`p-3.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+                          equipoSeleccionado === 'B'
+                            ? 'border-turf-600 bg-turf-50/70 text-turf-900 ring-2 ring-turf-500/50'
+                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Users className="w-4 h-4 text-navy-600" />
+                        <span className="truncate w-full text-center">
+                          {resumen.nombreEquipoB || 'Equipo B'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Si no está autenticado, solicita Nombre y Apellido de invitado */}
+                  {!estaAutenticado && (
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                      <p className="text-xs text-slate-600 font-medium">
+                        Puedes unirte como invitado o iniciar sesión para acumular goles y estadísticas.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          label="Nombre"
+                          placeholder="Tu nombre"
+                          value={nombreInvitado}
+                          onChange={(e) => setNombreInvitado(e.target.value)}
+                          required
+                        />
+                        <Input
+                          label="Apellido"
+                          placeholder="Tu apellido"
+                          value={apellidoInvitado}
+                          onChange={(e) => setApellidoInvitado(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="text-center pt-1">
+                        <Link
+                          to="/login"
+                          state={{ from: location.pathname }}
+                          className="text-xs font-bold text-turf-700 hover:underline"
+                        >
+                          ¿Tienes cuenta? Inicia sesión aquí
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    disabled={unirseMutation.isPending}
+                    className="w-full"
+                    icon={<Trophy className="w-4 h-4" />}
+                  >
+                    {unirseMutation.isPending
+                      ? 'Confirmando participación...'
+                      : `Confirmar y Unirme al ${equipoSeleccionado === 'A' ? (resumen.nombreEquipoA || 'Equipo A') : (resumen.nombreEquipoB || 'Equipo B')}`}
+                  </Button>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-2 font-bold text-slate-800 text-sm">
+                      <UserCheck className="w-4 h-4 text-turf-600" />
+                      <span>Reclamo de Perfil de Jugador</span>
+                    </div>
+                    <p>
+                      Si participaste previamente en este partido como jugador invitado, este enlace te permite vincular todas tus estadísticas, goles y asistencias a tu cuenta registrada.
+                    </p>
+                  </div>
+
+                  {estaAutenticado ? (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="lg"
+                      className="w-full"
+                      onClick={handleReclamarPerfil}
+                      disabled={reclamarMutation.isPending}
+                      icon={<UserCheck className="w-4 h-4" />}
+                    >
+                      {reclamarMutation.isPending
+                        ? 'Vinculando historial...'
+                        : `Vincular a mi cuenta (${usuario?.nombre || usuario?.correo})`}
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                        Debes iniciar sesión con tu cuenta registrada para reclamar y vincular este perfil de invitado.
+                      </p>
+                      <Link to="/login" state={{ from: location.pathname }}>
+                        <Button variant="primary" size="md" className="w-full" icon={<LogIn className="w-4 h-4" />}>
+                          Iniciar Sesión para Reclamar
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };
-

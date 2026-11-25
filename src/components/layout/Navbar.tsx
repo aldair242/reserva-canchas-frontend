@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { Button } from '@/components/ui/Button';
 import {
   Menu,
   X,
@@ -13,6 +15,7 @@ import {
   Activity,
   Grid,
   UserCheck,
+  Radio,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -30,12 +33,12 @@ export const Navbar: React.FC = () => {
   const getRolBadge = (r: string) => {
     switch (r) {
       case 'ADMIN':
-        return { label: 'Admin', color: 'bg-purple-100 text-purple-800 border-purple-200' };
+        return { label: 'Administrador Global', color: 'bg-navy-800 text-navy-100 border-navy-700' };
       case 'ADMIN_SEDE':
-        return { label: 'Admin Sede', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+        return { label: 'Admin de Sede', color: 'bg-turf-900/60 text-turf-200 border-turf-700/60' };
       case 'JUGADOR':
       default:
-        return { label: 'Jugador', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+        return { label: 'Jugador Oficial', color: 'bg-turf-800 text-turf-100 border-turf-700' };
     }
   };
 
@@ -44,15 +47,17 @@ export const Navbar: React.FC = () => {
       return [
         { label: 'Sedes', to: '/sedes', icon: MapPin },
         { label: 'Canchas', to: '/canchas', icon: Grid },
+        { label: 'Rankings', to: '/rankings', icon: Trophy },
       ];
     }
 
     if (rol === 'JUGADOR') {
       return [
+        { label: 'Mi Panel', to: '/dashboard', icon: Activity },
+        { label: 'Explorar Canchas', to: '/canchas', icon: Grid },
         { label: 'Sedes', to: '/sedes', icon: MapPin },
-        { label: 'Canchas', to: '/canchas', icon: Grid },
         { label: 'Mis Reservas', to: '/mis-reservas', icon: Calendar },
-        { label: 'Mis Partidos', to: '/mis-partidos', icon: Activity },
+        { label: 'Mis Partidos', to: '/mis-partidos', icon: Trophy },
         { label: 'Rankings', to: '/rankings', icon: Trophy },
         { label: 'Mi Perfil', to: '/perfil', icon: UserIcon },
       ];
@@ -63,16 +68,20 @@ export const Navbar: React.FC = () => {
         { label: 'Mis Sedes', to: '/admin/sedes', icon: MapPin },
         { label: 'Canchas & Tarifas', to: '/admin/canchas', icon: Grid },
         { label: 'Reservas de Sede', to: '/admin/reservas', icon: Calendar },
+        { label: 'Dispositivos IoT', to: '/admin/dispositivos', icon: Activity },
+        { label: 'Demo YOLO (IA)', to: '/admin/yolo', icon: Radio },
       ];
     }
 
     if (rol === 'ADMIN') {
       return [
-        { label: 'Todas las Sedes', to: '/admin/sedes', icon: MapPin },
-        { label: 'Gestión Canchas', to: '/admin/canchas', icon: Grid },
-        { label: 'Admins de Sede', to: '/admin/usuarios', icon: UserCheck },
-        { label: 'Rankings', to: '/rankings', icon: Trophy },
         { label: 'Panel Global', to: '/admin', icon: Shield },
+        { label: 'Sedes', to: '/admin/sedes', icon: MapPin },
+        { label: 'Canchas', to: '/admin/canchas', icon: Grid },
+        { label: 'Admins de Sede', to: '/admin/usuarios', icon: UserCheck },
+        { label: 'Dispositivos IoT', to: '/admin/dispositivos', icon: Activity },
+        { label: 'Rankings', to: '/rankings', icon: Trophy },
+        { label: 'Demo YOLO (IA)', to: '/admin/yolo', icon: Radio },
       ];
     }
 
@@ -82,98 +91,92 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <header className="sticky top-0 z-40 bg-navy-950 border-b border-navy-800 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo y Nombre */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold shadow-sm">
-                ⚽
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Logo y Marca */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-turf-400 rounded-xl p-1"
+          >
+            <BrandLogo isDark={true} />
+          </Link>
+
+          {/* Navegación de Escritorio */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2" aria-label="Navegación principal">
+            {navLinks.map((link) => {
+              const active = isActive(link.to);
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold tracking-wide transition-colors ${
+                    active
+                      ? 'bg-turf-700/80 text-white border border-turf-600'
+                      : 'text-navy-200 hover:text-white hover:bg-navy-900'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${active ? 'text-limeAccent-400' : 'text-navy-400'}`} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Acciones de Usuario (Escritorio) */}
+          <div className="hidden lg:flex items-center gap-3">
+            {!estaAutenticado ? (
+              <div className="flex items-center gap-2">
+                <Link to="/login">
+                  <Button variant="ghost" size="sm" className="text-navy-200 hover:text-white hover:bg-navy-900">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link to="/registro">
+                  <Button variant="lime" size="sm">
+                    Registrarse
+                  </Button>
+                </Link>
               </div>
-              <span className="font-bold text-lg sm:text-xl text-slate-800 tracking-tight">
-                Reserva <span className="text-emerald-600">Canchas</span>
-              </span>
-            </Link>
-
-            {/* Enlaces Desktop */}
-            <div className="hidden md:ml-8 md:flex md:space-x-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const active = isActive(link.to);
-                return (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition ${
-                      active
-                        ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-1.5" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sección de usuario (Desktop) */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
-            {estaAutenticado && usuario ? (
-              <div className="flex items-center space-x-3">
+            ) : (
+              <div className="flex items-center gap-3 pl-3 border-l border-navy-800">
                 <div className="text-right">
-                  <div className="text-sm font-medium text-slate-800">
-                    {usuario.nombre} {usuario.apellido}
-                  </div>
-                  <div className="flex justify-end">
+                  <p className="text-xs font-bold text-white truncate max-w-[140px]">
+                    {usuario?.nombre} {usuario?.apellido}
+                  </p>
+                  <div className="flex items-center justify-end gap-1.5 mt-0.5">
                     <span
-                      className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
-                        getRolBadge(usuario.rol).color
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        getRolBadge(rol || '').color
                       }`}
                     >
-                      {getRolBadge(usuario.rol).label}
+                      {getRolBadge(rol || '').label}
                     </span>
                   </div>
                 </div>
 
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleCerrarSesion}
-                  title="Cerrar sesión"
+                  className="bg-navy-900 border-navy-700 text-navy-300 hover:text-rose-400 hover:border-rose-900/60"
+                  icon={<LogOut className="w-3.5 h-3.5" />}
                   aria-label="Cerrar sesión"
-                  className="inline-flex items-center px-3 py-1.5 border border-slate-300 rounded-md text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition"
                 >
-                  <LogOut className="w-3.5 h-3.5 mr-1 text-slate-500" />
                   Salir
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Link
-                  to="/login"
-                  className="px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-md transition"
-                >
-                  Iniciar sesión
-                </Link>
-                <Link
-                  to="/registro"
-                  className="px-3.5 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-sm transition"
-                >
-                  Registrarse
-                </Link>
+                </Button>
               </div>
             )}
           </div>
 
-          {/* Botón menú móvil */}
-          <div className="flex items-center md:hidden">
+          {/* Botón Menú Móvil */}
+          <div className="lg:hidden flex items-center gap-2">
             <button
               type="button"
               onClick={() => setMenuAbierto(!menuAbierto)}
+              className="p-2 rounded-xl text-navy-300 hover:text-white hover:bg-navy-900 focus:outline-none focus:ring-2 focus:ring-turf-500"
               aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
-              className="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             >
               {menuAbierto ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -181,77 +184,75 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Menú Móvil */}
+      {/* Menú Desplegable Móvil */}
       {menuAbierto && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-2 pt-2 pb-3 space-y-1">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const active = isActive(link.to);
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMenuAbierto(false)}
-                className={`flex items-center px-3 py-2 text-base font-medium rounded-md ${
-                  active
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+        <div className="lg:hidden border-t border-navy-800 bg-navy-950 px-4 pt-3 pb-6 space-y-3">
+          {estaAutenticado && (
+            <div className="p-3 rounded-2xl bg-navy-900 border border-navy-800 mb-2">
+              <p className="text-xs font-bold text-white">
+                {usuario?.nombre} {usuario?.apellido}
+              </p>
+              <p className="text-[11px] text-navy-400 mt-0.5">{usuario?.correo}</p>
+              <span
+                className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border mt-2 ${
+                  getRolBadge(rol || '').color
                 }`}
               >
-                <Icon className="w-5 h-5 mr-3 text-slate-500" />
-                {link.label}
-              </Link>
-            );
-          })}
+                {getRolBadge(rol || '').label}
+              </span>
+            </div>
+          )}
 
-          <div className="pt-3 border-t border-slate-200">
-            {estaAutenticado && usuario ? (
-              <div className="px-3 py-2 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {usuario.nombre} {usuario.apellido}
-                    </p>
-                    <p className="text-xs text-slate-500">{usuario.correo}</p>
-                  </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
-                      getRolBadge(usuario.rol).color
-                    }`}
-                  >
-                    {getRolBadge(usuario.rol).label}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCerrarSesion}
-                  className="w-full flex items-center justify-center px-4 py-2 border border-red-200 rounded-md text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 transition"
+          <nav className="space-y-1">
+            {navLinks.map((link) => {
+              const active = isActive(link.to);
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuAbierto(false)}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    active
+                      ? 'bg-turf-700 text-white'
+                      : 'text-navy-200 hover:text-white hover:bg-navy-900'
+                  }`}
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Cerrar sesión
-                </button>
+                  <Icon className={`w-4 h-4 ${active ? 'text-limeAccent-400' : 'text-navy-400'}`} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="pt-3 border-t border-navy-800">
+            {!estaAutenticado ? (
+              <div className="grid grid-cols-2 gap-2">
+                <Link to="/login" onClick={() => setMenuAbierto(false)}>
+                  <Button variant="outline" size="sm" className="w-full bg-navy-900 border-navy-700 text-white">
+                    Ingresar
+                  </Button>
+                </Link>
+                <Link to="/registro" onClick={() => setMenuAbierto(false)}>
+                  <Button variant="lime" size="sm" className="w-full">
+                    Registro
+                  </Button>
+                </Link>
               </div>
             ) : (
-              <div className="space-y-2 p-2">
-                <Link
-                  to="/login"
-                  onClick={() => setMenuAbierto(false)}
-                  className="w-full flex items-center justify-center px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
-                >
-                  Iniciar sesión
-                </Link>
-                <Link
-                  to="/registro"
-                  onClick={() => setMenuAbierto(false)}
-                  className="w-full flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700"
-                >
-                  Registrarse
-                </Link>
-              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleCerrarSesion}
+                className="w-full"
+                icon={<LogOut className="w-4 h-4" />}
+              >
+                Cerrar Sesión
+              </Button>
             )}
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 };
